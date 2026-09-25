@@ -1,0 +1,57 @@
+# --- Environment & secrets ---
+.env
+.env.local
+.env.*.local
+
+# --- Node / npm ---
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm-global/
+
+# --- Build output ---
+dist/
+build/
+.vite/
+
+# --- TypeScript ---
+*.tsbuildinfo
+
+# --- Python ---
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+
+# --- Jupyter ---
+.ipynb_checkpoints/
+
+# --- ML model artifacts (usually large; consider Git LFS or excluding entirely) ---
+adapters/
+adapters2/
+adapters3/
+*.safetensors
+data/
+data_images/
+raw_receipts/
+
+# --- Editor / IDE ---
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# --- OS files ---
+.DS_Store
+Thumbs.db
+
+# --- Logs ---
+*.log
+
+# --- Misc ---
+.cache/
+coverage/
