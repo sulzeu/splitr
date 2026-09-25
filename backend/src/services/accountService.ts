@@ -1,5 +1,5 @@
 import { createHash, randomBytes, randomUUID, scryptSync, timingSafeEqual } from "crypto";
-import { Account } from "../schemas/types";
+import { Account } from "../schemas/auth";
 import { AccountRecord, AccountRepository } from "../repository/accountRepository";
 import { badRequest, conflict, unauthorized } from "../utils/httpError";
 

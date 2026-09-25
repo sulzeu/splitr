@@ -1,9 +1,8 @@
 import { execFile } from "child_process";
 import path from "path";
-import { receiptExtractionSchema } from "../schemas/receipt";
-import type { ReceiptExtraction } from "../schemas/receipt";
+import { extractedReceiptSchema, ExtractedReceipt } from "../schemas/receipt";
 
-export async function extractReceipt(imageBase64: string, mimeType?: string): Promise<ReceiptExtraction> {
+export async function extractReceipt(imageBase64: string, mimeType?: string): Promise<ExtractedReceipt> {
   const scriptPath = process.env.SPLITRECEIPT_INFERENCE_SCRIPT ??
     path.resolve(process.cwd(), "../model/receipt_inference.py");
   const python = process.env.SPLITRECEIPT_PYTHON ?? "python3";
@@ -22,7 +21,7 @@ export async function extractReceipt(imageBase64: string, mimeType?: string): Pr
       });
       child.stdin?.end(JSON.stringify({ imageBase64, mimeType }));
     });
-    return receiptExtractionSchema.parse(JSON.parse(stdout));
+    return extractedReceiptSchema.parse(JSON.parse(stdout));
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`Receipt model extraction failed: ${message}`);

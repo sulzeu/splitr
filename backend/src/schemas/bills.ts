@@ -8,13 +8,7 @@ export type GstMode = z.infer<typeof gstModeSchema>;
 export const billItemSchema = z.object({
   id: z.string(),
   name: z.string().trim().min(1).max(200),
-  /** Price of this one unit. Two identical items ordered together are two
-   *  separate BillItem rows (each at this price), never one row with a
-   *  quantity — that keeps each unit independently assignable (e.g.
-   *  "Alice had both Cokes" vs. "they split one Coke"). See
-   *  schemas/receipt.ts for where quantity is actually consumed. */
   price: z.number().min(0),
-  /** ids of people this item is assigned to. Length > 1 means shared. */
   assignedTo: z.array(z.string()),
 });
 export type BillItem = z.infer<typeof billItemSchema>;
@@ -40,7 +34,7 @@ export type Bill = z.infer<typeof billSchema>;
 
 export const personTotalSchema = z.object({
   personId: z.string(),
-  itemsSubtotal: z.number(), // this person's share of item prices before gst/tip/fees
+  itemsSubtotal: z.number(),
   gstShare: z.number(),
   tipShare: z.number(),
   serviceFeeShare: z.number(),

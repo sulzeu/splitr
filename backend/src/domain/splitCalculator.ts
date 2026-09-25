@@ -1,4 +1,4 @@
-import { Bill, PersonTotal, SplitResult } from "../schemas/types";
+import { Bill, PersonTotal, SplitResult } from "../schemas/bills";
 
 const toCents = (dollars: number): number => Math.round(dollars * 100);
 const fromCents = (cents: number): number => Math.round(cents) / 100;

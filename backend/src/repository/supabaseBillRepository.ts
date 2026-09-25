@@ -1,23 +1,7 @@
 import { SupabaseClient } from "@supabase/supabase-js";
-import { Bill } from "../schemas/types";
+import { Bill } from "../schemas/bills";
 import { BillRepository } from "./billRepository";
-
-type BillRow = {
-  id: string;
-  owner_id: string;
-  join_code: string;
-  created_at: number;
-  title: string;
-  people: Bill["people"];
-  items: Bill["items"];
-  gst_mode: Bill["gstMode"];
-  gst_rate: number;
-  tip_amount: number;
-  service_fee_amount: number;
-  receipt_total: number | null;
-  settled_person_ids: string[];
-  paid_at: number | null;
-};
+import { version } from "os";
 
 export class SupabaseBillRepository implements BillRepository {
   constructor(private client: SupabaseClient) {}
@@ -30,7 +14,7 @@ export class SupabaseBillRepository implements BillRepository {
   async getById(billId: string): Promise<Bill | undefined> {
     const { data, error } = await this.client.from("bills").select("*").eq("id", billId).maybeSingle();
     if (error) throw error;
-    return data ? this.fromRow(data as BillRow) : undefined;
+    return data ? this.fromRow(data as Bill) : undefined;
   }
 
   async getIdByJoinCode(joinCode: string): Promise<string | undefined> {
@@ -47,7 +31,7 @@ export class SupabaseBillRepository implements BillRepository {
     const query = this.client.from("bills").select("*").eq("owner_id", ownerId).order("created_at", { ascending: false });
     const { data, error } = paid ? await query.not("paid_at", "is", null) : await query.is("paid_at", null);
     if (error) throw error;
-    return (data ?? []).map((row) => this.fromRow(row as BillRow));
+    return (data ?? []).map((row) => this.fromRow(row as Bill));
   }
 
   async save(bill: Bill): Promise<void> {
@@ -71,25 +55,27 @@ export class SupabaseBillRepository implements BillRepository {
       receipt_total: bill.receiptTotal ?? null,
       settled_person_ids: bill.settledPersonIds,
       paid_at: bill.paidAt ?? null,
+      version: bill.version ?? 1
     };
   }
 
-  private fromRow(row: BillRow): Bill {
+  private fromRow(row: Bill): Bill {
     return {
       id: row.id,
-      ownerId: row.owner_id,
-      joinCode: row.join_code,
-      createdAt: row.created_at,
+      ownerId: row.ownerId,
+      joinCode: row.joinCode,
+      createdAt: row.createdAt,
       title: row.title,
       people: row.people,
       items: row.items,
-      gstMode: row.gst_mode,
-      gstRate: row.gst_rate,
-      tipAmount: row.tip_amount,
-      serviceFeeAmount: row.service_fee_amount,
-      receiptTotal: row.receipt_total ?? undefined,
-      settledPersonIds: row.settled_person_ids,
-      paidAt: row.paid_at ?? undefined,
+      gstMode: row.gstMode,
+      gstRate: row.gstRate,
+      tipAmount: row.tipAmount,
+      serviceFeeAmount: row.serviceFeeAmount,
+      receiptTotal: row.receiptTotal ?? undefined,
+      settledPersonIds: row.settledPersonIds,
+      paidAt: row.paidAt ?? undefined,
+      version: row.version ?? 1
     };
   }
 }

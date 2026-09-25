@@ -1,10 +1,10 @@
 import { randomUUID } from "crypto";
-import { Bill, BillItem, GstMode } from "../schemas/types";
+import { Bill, BillItem, GstMode } from "../schemas/bills";
 import { calculateSplit } from "../domain/splitCalculator";
 import { BillRepository } from "../repository/billRepository";
 import { generateJoinCode } from "../utils/joinCode";
 import { forbidden, notFound } from "../utils/httpError";
-import { ReceiptExtraction } from "../schemas/receipt";
+import { ExtractedReceipt } from "../schemas/receipt";
 
 const AU_GST_RATE = 0.1;
 const MAX_JOIN_CODE_ATTEMPTS = 5;
@@ -43,6 +43,7 @@ export class BillService {
       tipAmount: 0,
       serviceFeeAmount: 0,
       settledPersonIds: [],
+      version: 1,
     };
     await this.repo.create(bill, joinCode);
     return bill;
@@ -132,7 +133,6 @@ export class BillService {
       id: randomUUID(),
       name: item.name.trim(),
       price: item.price,
-      quantity: item.quantity ?? 1,
       assignedTo: [],
     };
     const updated: Bill = { ...bill, items: [...bill.items, newItem] };
@@ -140,7 +140,7 @@ export class BillService {
     return updated;
   }
 
-  async importReceipt(billId: string, ownerId: string, extraction: ReceiptExtraction): Promise<Bill> {
+  async importReceipt(billId: string, ownerId: string, extraction: ExtractedReceipt): Promise<Bill> {
     const bill = await this.requireBill(billId, ownerId);
     const importedItems: BillItem[] = extraction.items.map((item) => ({
       id: randomUUID(),
@@ -162,7 +162,7 @@ export class BillService {
     billId: string,
     ownerId: string,
     itemId: string,
-    patch: Partial<Pick<BillItem, "name" | "price" | "quantity">>
+    patch: Partial<Pick<BillItem, "name" | "price">>
   ): Promise<Bill> {
     const bill = await this.requireBill(billId, ownerId);
     if (!bill.items.some((i) => i.id === itemId)) throw notFound("Item");

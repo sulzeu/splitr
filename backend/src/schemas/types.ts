@@ -1,3 +1,4 @@
+/**
 // --- Account ---
 
 // For internal use only, not exposed to clients
@@ -114,3 +115,5 @@ export type SplitResult = {
   unclaimedSubtotal: number;
   grandTotal: number;
 };
+
+*/

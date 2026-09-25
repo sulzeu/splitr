@@ -1,4 +1,4 @@
-import { Account } from "../schemas/types";
+import { Account } from "../schemas/auth";
 
 export interface AccountRecord extends Account {
   passwordHash: string;

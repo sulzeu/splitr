@@ -1,4 +1,4 @@
-import { Bill } from "../schemas/types";
+import { Bill } from "../schemas/bills";
 import { BillRepository } from "./billRepository";
 
 /**

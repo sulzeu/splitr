@@ -1,4 +1,4 @@
-import { Bill } from "../schemas/types";
+import { Bill } from "../schemas/bills";
 
 /**
  * Everything the rest of the app knows about persistence goes through this
