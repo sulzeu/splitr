@@ -4,7 +4,7 @@ A bill-splitting app that lets a table split a receipt fairly — proportional t
 
 ---
 
-## Status: 🚧 In development
+## Status: In development
 
 | Area | Status |
 |---|---|
@@ -14,7 +14,7 @@ A bill-splitting app that lets a table split a receipt fairly — proportional t
 | Frontend (React) | Done |
 | Supabase persistence | Done |
 | AI receipt scanning (Qwen2-VL) | Fine-tuned, integrated |
-| Shared types/schemas (backend ↔ frontend) | In progress — not yet unified |
+| Shared types/schemas (backend - frontend) | In progress — not yet unified |
 | Deployment | Not yet deployed |
 | Tests | Not yet added |
 
