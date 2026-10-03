@@ -84,7 +84,7 @@ export const api = {
 
   addItem: (billId: string, item: { name: string; price: number; quantity?: number }) =>
     request<Bill>(`/api/bills/${billId}/items`, json(item)),
-  updateItem: (billId: string, itemId: string, patchBody: Partial<Pick<BillItem, "name" | "price" | "quantity">>) =>
+  updateItem: (billId: string, itemId: string, patchBody: Partial<Pick<BillItem, "name" | "price" >>) =>
     request<Bill>(`/api/bills/${billId}/items/${itemId}`, patch(patchBody)),
   removeItem: (billId: string, itemId: string) =>
     request<Bill>(`/api/bills/${billId}/items/${itemId}`, { method: "DELETE" }),

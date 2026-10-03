@@ -13,9 +13,9 @@ import {
   setSettledSchema,
   toggleAssignmentSchema,
   updateItemSchema,
-  updateSettingsSchema,
+  updateBillSettingsSchema,
 } from "../schemas/bills";
-import { receiptRequestSchema } from "../schemas/receipt";
+import { requestedReceiptSchema } from "../schemas/receipt";
 
 export function createBillsRouter(billService: BillService, accountService: AccountService): Router {
   const router = Router();
@@ -47,7 +47,7 @@ export function createBillsRouter(billService: BillService, accountService: Acco
     "/:billId/receipt",
     auth,
     asyncHandler(async (req, res) => {
-      const { imageBase64, mimeType } = receiptRequestSchema.parse(req.body);
+      const { imageBase64, mimeType } = requestedReceiptSchema.parse(req.body);
       const extraction = await extractReceipt(imageBase64, mimeType);
       const bill = await billService.importReceipt(req.params.billId, accountId(req), extraction);
       res.json({ bill, extraction });
@@ -74,7 +74,7 @@ export function createBillsRouter(billService: BillService, accountService: Acco
     "/:billId",
     auth,
     asyncHandler(async (req, res) => {
-      const patch = updateSettingsSchema.parse(req.body);
+      const patch = updateBillSettingsSchema.parse(req.body);
       const bill = await billService.updateSettings(req.params.billId, accountId(req), patch);
       res.json(bill);
     })
