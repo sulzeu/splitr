@@ -1,139 +1,112 @@
 # SplitReceipt
 
-A bill-splitting app that lets a table split a receipt fairly — proportional to what each person actually ordered, not an even per-head split. Includes an AI-powered receipt scanner (fine-tuned vision-language model) to auto-extract line items from a photo.
+> A full-stack bill-splitting app that calculates what each person actually owes—not just an equal share.
 
----
+[![CI](https://github.com/sulzeu/splitr/actions/workflows/ci.yml/badge.svg)](https://github.com/sulzeu/splitr/actions/workflows/ci.yml)
 
-## Status: In development
+SplitReceipt helps a group turn a receipt into a transparent split. Add people and items, assign items to one or more people, and calculate totals including GST, tips, and service fees. Bills can be shared by join code, and receipt photos can be used to speed up item entry.
 
-| Area | Status |
-|---|---|
-| Core bill-splitting logic | Done |
-| Backend REST API | Done |
-| Auth (email/password + OAuth) | Done |
-| Frontend (React) | Done |
-| Supabase persistence | Done |
-| AI receipt scanning (Qwen2-VL) | Fine-tuned, integrated |
-| Shared types/schemas (backend - frontend) | In progress — not yet unified |
-| Deployment | Not yet deployed |
-| Tests | Added with coverage gates |
+**Project status:** In development. The application is not currently deployed as a public demo.
 
----
+## Highlights
 
-## Features
+- **Fair, penny-exact calculations:** distributes item costs and shared charges using a largest-remainder approach so allocated amounts reconcile to the bill total.
+- **Flexible item assignment:** supports individual and shared items rather than assuming every person owes the same amount.
+- **Full bill lifecycle:** create or join bills, add people and items, assign items, review the split, track settlement, and revisit bill history.
+- **Receipt extraction:** integrates a locally run vision-language model to extract line items from receipt photos, with manual entry available.
+- **Backend-owned state and calculations:** Express services and repositories keep persistence and business rules out of the UI.
+- **Automated quality checks:** CI runs linting, formatting, tests with coverage floors, and production builds for both app layers.
 
-- **Cent-exact splitting** — item cost, GST, tip, and service fee are distributed using the largest-remainder method, so shares always sum exactly to the total (no missing/extra cent).
-- **GST handling** — supports inclusive, exclusive, or no-GST modes (Australian menu conventions by default).
-- **Join codes** — a 6-character human-typable code lets anyone view or help edit a shared bill without an account.
-- **Accounts & history** — email/password or Google/Apple OAuth login; past bills (active and paid) are saved per account.
-- **AI receipt scanning** — photograph a receipt and have items, prices, and totals extracted automatically via a fine-tuned vision-language model, with manual entry as a fallback.
+## Product flow
 
----
+1. Create a bill or join one with a code.
+2. Add the people sharing the bill.
+3. Add receipt items manually or import a receipt image.
+4. Assign each item to the people who ordered it.
+5. Review per-person totals, account for extra charges, and track who has paid.
 
-## Tech stack
+## Technology
 
-**Frontend:** React, TypeScript, Vite
-**Backend:** Express, TypeScript, Zod (validation)
-**Database:** Supabase (Postgres), with an in-memory implementation for local development
-**ML:** Qwen2-VL-2B fine-tuned via QLoRA (4-bit) using MLX on Apple Silicon
-
----
+| Area               | Technologies                                                         |
+| ------------------ | -------------------------------------------------------------------- |
+| Frontend           | React, TypeScript, Vite                                              |
+| Backend            | Node.js, Express, TypeScript                                         |
+| Validation         | Zod                                                                  |
+| Persistence        | Supabase/Postgres, with in-memory repositories for local development |
+| Testing            | Vitest, Supertest, React Testing Library                             |
+| Receipt extraction | Fine-tuned Qwen2-VL model with a local inference integration         |
 
 ## Architecture
 
-```
-splitreceipt/
-├── backend/
-│   ├── domain/          # Core types & business logic (splitCalculator)
-│   ├── repository/      # Data access (in-memory + Supabase implementations)
-│   ├── services/        # Application logic (billService, accountService, receiptService)
-│   ├── routes/          # Express routers
-│   ├── schemas/         # Zod validation schemas
-│   ├── middleware/      # Auth, error handling, async wrapper
-│   └── utils/           # Join code generation, HTTP errors
-├── frontend/
-│   ├── context/         # BillContext, AuthContext
-│   ├── screens/         # Home, People, Items, Assign, Summary, Auth
-│   ├── components/      # Shared UI components
-│   └── api/             # Backend client
-└── model/
-    ├── training_mlx.ipynb    # Fine-tuning pipeline (MLX / Apple Silicon)
-    ├── training_cuda.ipynb   # Fine-tuning pipeline (CUDA)
-    ├── receipt_inference.py  # Inference script called by the backend
-    └── annotation.py         # Auto-labeling pipeline (Gemini-assisted)
+```text
+frontend/
+  src/screens/       User-facing bill, assignment, and summary flows
+  src/context/       Authentication and bill state
+  src/api/           Backend client
+
+backend/
+  src/domain/        Split calculation rules
+  src/routes/        HTTP boundary
+  src/services/      Bill and account workflows
+  src/repository/    In-memory and Supabase persistence
+  src/schemas/       Request validation
+
+model/
+  receipt_inference.py   Local receipt inference entry point
 ```
 
-The backend uses a **repository pattern** — swapping from in-memory storage to Supabase/Postgres is a one-line change in `server.ts`, with no changes needed in routes or business logic.
+The frontend calls the backend through a typed API client. Backend routes validate input and delegate to services; services apply the bill rules through repository interfaces. This keeps the calculation and persistence logic independent of the React screens and allows local development without a configured database.
 
-> **Note:** Backend (`domain/types.ts` / Zod schemas) and frontend (`src/types.ts`) currently define their own copies of shared types like `Bill`, `BillItem`, and `GstMode`. These are kept in sync by hand for now — a shared types package (or generating frontend types from the Zod schemas) is on the roadmap to prevent drift between the two.
+## Engineering and quality
 
----
+The repository includes:
 
-## Machine learning results
+- backend integration tests for authentication, bill access, item assignment, and penny-exact split behavior
+- frontend screen tests for authentication, bill creation/join/history, assignment, and summary/payment actions
+- CI checks for ESLint, Prettier, coverage thresholds, and frontend/backend production builds
 
-Fine-tuned `Qwen2-VL-2B-Instruct` (4-bit QLoRA, 500 iterations, ~9.2M trainable params) on 792 receipt images from the CORD-v2 dataset, evaluated on a 100-image held-out test set:
+Coverage is enforced as a regression floor, not a claim that every code path is tested. The current thresholds are:
 
-| Metric | Zero-shot baseline | Fine-tuned | Change |
-|---|---|---|---|
-| Item precision | 0.443 | 0.643 | +45.1% |
-| Item recall | 0.522 | 0.660 | +26.4% |
-| Item F1 | 0.463 | 0.643 | +38.9% |
-| Total accuracy | 71% | 80% | +9% |
+| Layer    | Statements | Branches | Functions | Lines |
+| -------- | ---------: | -------: | --------: | ----: |
+| Backend  |        78% |      68% |       76% |   80% |
+| Frontend |        67% |      62% |       66% |   70% |
 
----
+## Run locally
 
-## Roadmap
+Prerequisites: Node.js 20 or newer and npm.
 
-- [ ] Unify types/schemas between backend and frontend (currently defined separately in each — risk of drift, e.g. `Bill`/`BillItem` shapes)
-- [ ] Add automated tests (unit tests for split calculator, integration tests for API)
-- [ ] Deploy backend + frontend
-- [ ] Improve receipt scanning accuracy further (larger training set, Qwen3-VL once memory constraints are resolved)
-- [ ] Add currency support beyond AUD/GST
-- [ ] Push notifications for join-code activity
-
----
-
-## Getting started
+Start the backend in one terminal:
 
 ```bash
-# Backend
 cd backend
-npm install
-npm run dev
-
-# Frontend
-cd frontend
-npm install
+npm ci
 npm run dev
 ```
 
-## Validation and quality gates
-
-Run the same checks CI enforces before opening a PR:
+Start the frontend in another:
 
 ```bash
-# Backend
-cd backend
-npm run lint
-npm run format
-npm run test:coverage
-npm run build
-
-# Frontend
 cd frontend
+npm ci
+npm run dev
+```
+
+The local frontend runs at `http://localhost:5173`; the backend defaults to `http://localhost:3001`. The backend uses in-memory storage by default. Supabase persistence and receipt-model dependencies are optional and require local environment setup; see [backend/README.md](backend/README.md).
+
+## Run the quality checks
+
+Run these commands from each of `backend/` and `frontend/`:
+
+```bash
 npm run lint
 npm run format
 npm run test:coverage
 npm run build
 ```
 
-CI enforces a small release gate with linting, formatting, coverage floors, and both backend/frontend builds. Coverage floors are intentionally set to the current baseline so we reject regressions without forcing a large test expansion while the app is still stabilizing.
+## Current focus
 
-Current floor targets:
-
-- Backend: 78% statements, 68% branches, 76% functions, 80% lines
-- Frontend: 67% statements, 62% branches, 66% functions, 70% lines
-
-Set `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in a `.env` file to use Postgres persistence; otherwise the backend falls back to in-memory storage automatically.
-
-For local browser development, the frontend defaults to `http://localhost:5173`, and the backend defaults to `http://localhost:3001`. If you need to connect a phone or another machine, set `VITE_API_BASE_URL` in the frontend and `CORS_ORIGIN` in the backend as needed.
+- expanding integration and screen-level coverage across the bill lifecycle
+- improving receipt extraction and its fallback experience
+- continuing to harden configuration for production deployment
