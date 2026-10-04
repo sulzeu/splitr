@@ -78,7 +78,7 @@ Fine-tuned `Qwen2-VL-2B-Instruct` (4-bit QLoRA, 500 iterations, ~9.2M trainable 
 | Item precision | 0.443 | 0.643 | +45.1% |
 | Item recall | 0.522 | 0.660 | +26.4% |
 | Item F1 | 0.463 | 0.643 | +38.9% |
-| Total accuracy | 71% | 80% | +9 pts |
+| Total accuracy | 71% | 80% | +9% |
 
 ---
 
@@ -107,4 +107,22 @@ npm install
 npm run dev
 ```
 
+## Validation and quality gates
+
+Run the same checks CI enforces before opening a PR:
+
+```bash
+# Backend
+cd backend
+npm test
+npm run build
+
+# Frontend
+cd frontend
+npm test
+npm run build
+```
+
 Set `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in a `.env` file to use Postgres persistence; otherwise the backend falls back to in-memory storage automatically.
+
+For local browser development, the frontend defaults to `http://localhost:5173`, and the backend defaults to `http://localhost:3001`. If you need to connect a phone or another machine, set `VITE_API_BASE_URL` in the frontend and `CORS_ORIGIN` in the backend as needed.

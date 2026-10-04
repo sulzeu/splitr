@@ -5,14 +5,12 @@ import { InMemoryAccountRepository } from "./repository/inMemoryAccountRepositor
 import { createClient } from "@supabase/supabase-js";
 import { SupabaseAccountRepository } from "./repository/supabaseAccountRepository";
 import { SupabaseBillRepository } from "./repository/supabaseBillRepository";
+import { getAppConfig } from "./config";
 
-const PORT = process.env.PORT ? Number(process.env.PORT) : 3001;
-
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const app = supabaseUrl && supabaseServiceRoleKey
+const config = getAppConfig();
+const app = config.supabaseUrl && config.supabaseServiceRoleKey
   ? (() => {
-      const client = createClient(supabaseUrl, supabaseServiceRoleKey);
+      const client = createClient(config.supabaseUrl, config.supabaseServiceRoleKey!);
       return createApp(
         new SupabaseBillRepository(client),
         new SupabaseAccountRepository(client),
@@ -29,12 +27,12 @@ const app = supabaseUrl && supabaseServiceRoleKey
     })()
   : createApp(new InMemoryBillRepository(), new InMemoryAccountRepository());
 
-if (!supabaseUrl || !supabaseServiceRoleKey) {
+if (!config.supabaseUrl || !config.supabaseServiceRoleKey) {
   // eslint-disable-next-line no-console
   console.warn("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are missing; using in-memory storage");
 }
 
-app.listen(PORT, () => {
+app.listen(config.port, () => {
   // eslint-disable-next-line no-console
-  console.log(`SplitReceipt backend listening on http://localhost:${PORT}`);
+  console.log(`SplitReceipt backend listening on http://localhost:${config.port}`);
 });

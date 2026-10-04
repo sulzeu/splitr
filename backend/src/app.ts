@@ -9,6 +9,7 @@ import { InMemoryAccountRepository } from "./repository/inMemoryAccountRepositor
 import { AccountService } from "./services/accountService";
 import { createAuthRouter } from "./routes/auth";
 import { OAuthVerifier } from "./services/accountService";
+import { getAppConfig } from "./config";
 
 export function createApp(
   repo: BillRepository,
@@ -18,8 +19,18 @@ export function createApp(
   const app = express();
   const billService = new BillService(repo);
   const accountService = new AccountService(accountRepo, verifyOAuthToken);
+  const config = getAppConfig();
 
-  app.use(cors());
+  app.use(cors({
+    origin: (origin, callback) => {
+      if (!origin || config.corsOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+      callback(new Error("Origin not allowed by CORS"));
+    },
+    credentials: true,
+  }));
   app.use(express.json());
 
   app.get("/health", (_req, res) => res.json({ ok: true }));
