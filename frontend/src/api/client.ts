@@ -23,7 +23,9 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     res = await fetch(`${API_BASE}${path}`, {
       headers: {
         "Content-Type": "application/json",
-        ...(localStorage.getItem(TOKEN_KEY) ? { Authorization: `Bearer ${localStorage.getItem(TOKEN_KEY)}` } : {}),
+        ...(localStorage.getItem(TOKEN_KEY)
+          ? { Authorization: `Bearer ${localStorage.getItem(TOKEN_KEY)}` }
+          : {}),
       },
       ...options,
     });
@@ -59,21 +61,29 @@ export const api = {
   getMe: () => request<Account>("/api/auth/me"),
   logout: () => request<void>("/api/auth/logout", { method: "POST" }),
   getAccountBills: () => request<{ active: Bill[]; paid: Bill[] }>("/api/auth/me/bills"),
-  setBillPaid: (billId: string, paid: boolean) => request<Bill>(`/api/bills/${billId}/paid`, patch({ paid })),
-  createBill: (title?: string) => request<Bill>("/api/bills", { ...json({ title }), method: "POST" }),
+  setBillPaid: (billId: string, paid: boolean) =>
+    request<Bill>(`/api/bills/${billId}/paid`, patch({ paid })),
+  createBill: (title?: string) =>
+    request<Bill>("/api/bills", { ...json({ title }), method: "POST" }),
   getBill: (billId: string) => request<Bill>(`/api/bills/${billId}`),
   getBillByJoinCode: (joinCode: string) => request<Bill>(`/api/bills/by-code/${joinCode}`),
-  getSplitByJoinCode: (joinCode: string) => request<SplitResult>(`/api/bills/by-code/${joinCode}/split`),
+  getSplitByJoinCode: (joinCode: string) =>
+    request<SplitResult>(`/api/bills/by-code/${joinCode}/split`),
   updateSettings: (
     billId: string,
-    settings: Partial<Pick<Bill, "title" | "gstMode" | "gstRate" | "tipAmount" | "serviceFeeAmount">>
+    settings: Partial<
+      Pick<Bill, "title" | "gstMode" | "gstRate" | "tipAmount" | "serviceFeeAmount">
+    >
   ) => request<Bill>(`/api/bills/${billId}`, patch(settings)),
   getSplit: (billId: string) => request<SplitResult>(`/api/bills/${billId}/split`),
   importReceipt: (billId: string, imageBase64: string, mimeType?: string) =>
-    request<{ bill: Bill; extraction: { items: Array<{ name: string; price: number; quantity: number }>; total: number } }>(
-      `/api/bills/${billId}/receipt`,
-      json({ imageBase64, mimeType })
-    ),
+    request<{
+      bill: Bill;
+      extraction: {
+        items: Array<{ name: string; price: number; quantity: number }>;
+        total: number;
+      };
+    }>(`/api/bills/${billId}/receipt`, json({ imageBase64, mimeType })),
 
   addPerson: (billId: string, name: string) =>
     request<Bill>(`/api/bills/${billId}/people`, json({ name })),
@@ -84,8 +94,11 @@ export const api = {
 
   addItem: (billId: string, item: { name: string; price: number; quantity?: number }) =>
     request<Bill>(`/api/bills/${billId}/items`, json(item)),
-  updateItem: (billId: string, itemId: string, patchBody: Partial<Pick<BillItem, "name" | "price" >>) =>
-    request<Bill>(`/api/bills/${billId}/items/${itemId}`, patch(patchBody)),
+  updateItem: (
+    billId: string,
+    itemId: string,
+    patchBody: Partial<Pick<BillItem, "name" | "price">>
+  ) => request<Bill>(`/api/bills/${billId}/items/${itemId}`, patch(patchBody)),
   removeItem: (billId: string, itemId: string) =>
     request<Bill>(`/api/bills/${billId}/items/${itemId}`, { method: "DELETE" }),
   toggleAssignment: (billId: string, itemId: string, personId: string) =>

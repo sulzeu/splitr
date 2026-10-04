@@ -5,7 +5,7 @@ export const requestedReceiptSchema = z.object({
   mimeType: z.enum(["image/jpeg", "image/png", "image/webp"]).optional(),
 });
 
-export type RequestReceipt = z.infer<typeof requestedReceiptSchema>
+export type RequestReceipt = z.infer<typeof requestedReceiptSchema>;
 
 export const extractedReceiptSchema = z.object({
   items: z.array(

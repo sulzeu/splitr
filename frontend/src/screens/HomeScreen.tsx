@@ -9,13 +9,21 @@ export function HomeScreen({ onEnterBill }: { onEnterBill: () => void }) {
   const { createBill, joinBill, openBill, loading } = useBill();
   const [mode, setMode] = useState<"choose" | "join">("choose");
   const [code, setCode] = useState("");
-  const [history, setHistory] = useState<{ active: Bill[]; paid: Bill[] }>({ active: [], paid: [] });
+  const [history, setHistory] = useState<{ active: Bill[]; paid: Bill[] }>({
+    active: [],
+    paid: [],
+  });
   const [historyError, setHistoryError] = useState<string | null>(null);
 
   useEffect(() => {
-    api.getAccountBills().then(setHistory).catch((error) => {
-      setHistoryError(error instanceof ApiError ? error.message : "Couldn't load your bill history.");
-    });
+    api
+      .getAccountBills()
+      .then(setHistory)
+      .catch((error) => {
+        setHistoryError(
+          error instanceof ApiError ? error.message : "Couldn't load your bill history."
+        );
+      });
   }, []);
 
   const handleCreate = async () => {
@@ -43,7 +51,12 @@ export function HomeScreen({ onEnterBill }: { onEnterBill: () => void }) {
 
       {mode === "choose" ? (
         <>
-          <Button label="Start a new split" onClick={handleCreate} disabled={loading} style={{ width: "100%" }} />
+          <Button
+            label="Start a new split"
+            onClick={handleCreate}
+            disabled={loading}
+            style={{ width: "100%" }}
+          />
           <Button
             label="Join a split with a code"
             variant="secondary"
@@ -57,13 +70,21 @@ export function HomeScreen({ onEnterBill }: { onEnterBill: () => void }) {
               {history.active.map((bill) => (
                 <HistoryButton key={bill.id} bill={bill} onOpen={openBill} onEnter={onEnterBill} />
               ))}
-              {history.paid.length > 0 && <span className="label" style={{ display: "block", marginTop: 16 }}>PAID</span>}
+              {history.paid.length > 0 && (
+                <span className="label" style={{ display: "block", marginTop: 16 }}>
+                  PAID
+                </span>
+              )}
               {history.paid.map((bill) => (
                 <HistoryButton key={bill.id} bill={bill} onOpen={openBill} onEnter={onEnterBill} />
               ))}
             </div>
           )}
-          {historyError && <p className="body-faint" style={{ color: "var(--outstanding)" }}>{historyError}</p>}
+          {historyError && (
+            <p className="body-faint" style={{ color: "var(--outstanding)" }}>
+              {historyError}
+            </p>
+          )}
         </>
       ) : (
         <>
@@ -76,7 +97,12 @@ export function HomeScreen({ onEnterBill }: { onEnterBill: () => void }) {
             maxLength={6}
             autoFocus
             onKeyDown={(e) => e.key === "Enter" && handleJoin()}
-            style={{ marginTop: 4, letterSpacing: "0.1em", textAlign: "center", fontFamily: "var(--font-display)" }}
+            style={{
+              marginTop: 4,
+              letterSpacing: "0.1em",
+              textAlign: "center",
+              fontFamily: "var(--font-display)",
+            }}
           />
           <Button
             label={loading ? "Joining…" : "Join"}
@@ -101,12 +127,27 @@ export function HomeScreen({ onEnterBill }: { onEnterBill: () => void }) {
   );
 }
 
-function HistoryButton({ bill, onOpen, onEnter }: { bill: Bill; onOpen: (id: string) => Promise<boolean>; onEnter: () => void }) {
+function HistoryButton({
+  bill,
+  onOpen,
+  onEnter,
+}: {
+  bill: Bill;
+  onOpen: (id: string) => Promise<boolean>;
+  onEnter: () => void;
+}) {
   return (
     <button
       className="row-between"
       onClick={() => void onOpen(bill.id).then((opened) => opened && onEnter())}
-      style={{ width: "100%", border: "none", borderBottom: "1px dashed var(--perforation)", background: "transparent", padding: "10px 0", cursor: "pointer" }}
+      style={{
+        width: "100%",
+        border: "none",
+        borderBottom: "1px dashed var(--perforation)",
+        background: "transparent",
+        padding: "10px 0",
+        cursor: "pointer",
+      }}
     >
       <span className="body-text">{bill.title}</span>
       <span className="body-faint">{new Date(bill.createdAt).toLocaleDateString()}</span>

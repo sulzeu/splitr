@@ -1,3 +1,5 @@
+import { resolve } from "node:path";
+
 export type AppConfig = {
   port: number;
   corsOrigins: string[];
@@ -31,8 +33,7 @@ export function getAppConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     supabaseUrl: env.SUPABASE_URL || undefined,
     supabaseServiceRoleKey: env.SUPABASE_SERVICE_ROLE_KEY || undefined,
     inferenceScriptPath:
-      env.SPLITRECEIPT_INFERENCE_SCRIPT ??
-      require("node:path").resolve(process.cwd(), "../model/receipt_inference.py"),
+      env.SPLITRECEIPT_INFERENCE_SCRIPT ?? resolve(process.cwd(), "../model/receipt_inference.py"),
     pythonExecutable: env.SPLITRECEIPT_PYTHON ?? "python3",
   };
 }

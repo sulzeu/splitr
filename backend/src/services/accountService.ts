@@ -16,14 +16,22 @@ export type OAuthVerifier = (accessToken: string) => Promise<OAuthProfile | unde
 export class AccountService {
   private static readonly SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
-  constructor(private repo: AccountRepository, private verifyOAuthToken?: OAuthVerifier) {}
+  constructor(
+    private repo: AccountRepository,
+    private verifyOAuthToken?: OAuthVerifier
+  ) {}
 
-  async register(email: string, password: string, displayName: string): Promise<{ account: Account; token: string }> {
+  async register(
+    email: string,
+    password: string,
+    displayName: string
+  ): Promise<{ account: Account; token: string }> {
     const normalizedEmail = email.trim().toLowerCase();
     if (password.length < PASSWORD_MIN_LENGTH) {
       throw badRequest(`Password must be at least ${PASSWORD_MIN_LENGTH} characters`);
     }
-    if (await this.repo.getByEmail(normalizedEmail)) throw conflict("An account with that email already exists");
+    if (await this.repo.getByEmail(normalizedEmail))
+      throw conflict("An account with that email already exists");
 
     const account: AccountRecord = {
       id: randomUUID(),
@@ -78,7 +86,11 @@ export class AccountService {
 
   private async createSession(accountId: string): Promise<string> {
     const token = randomBytes(32).toString("hex");
-    await this.repo.createSession(this.hashToken(token), accountId, Date.now() + AccountService.SESSION_TTL_MS);
+    await this.repo.createSession(
+      this.hashToken(token),
+      accountId,
+      Date.now() + AccountService.SESSION_TTL_MS
+    );
     return token;
   }
 

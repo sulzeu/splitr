@@ -22,7 +22,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (authToken.get()) {
-      api.getMe().then(setAccount).catch(() => authToken.clear()).finally(() => setLoading(false));
+      api
+        .getMe()
+        .then(setAccount)
+        .catch(() => authToken.clear())
+        .finally(() => setLoading(false));
       return;
     }
     const client = supabase;
@@ -30,16 +34,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
       return;
     }
-    client.auth.getSession().then(async ({ data }) => {
-      const session = data.session;
-      if (!session?.user.email) return;
-      const result = await api.loginWithOAuth({ accessToken: session.access_token });
-      authToken.set(result.token);
-      setAccount(result.account);
-      await client.auth.signOut();
-    }).catch((e) => {
-      setError(e instanceof ApiError ? e.message : "OAuth authentication failed.");
-    }).finally(() => setLoading(false));
+    client.auth
+      .getSession()
+      .then(async ({ data }) => {
+        const session = data.session;
+        if (!session?.user.email) return;
+        const result = await api.loginWithOAuth({ accessToken: session.access_token });
+        authToken.set(result.token);
+        setAccount(result.account);
+        await client.auth.signOut();
+      })
+      .catch((e) => {
+        setError(e instanceof ApiError ? e.message : "OAuth authentication failed.");
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   const authenticate = async (action: () => Promise<{ account: Account; token: string }>) => {
@@ -59,7 +67,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
-    try { await api.logout(); } finally { authToken.clear(); setAccount(null); }
+    try {
+      await api.logout();
+    } finally {
+      authToken.clear();
+      setAccount(null);
+    }
   };
 
   const loginWithProvider = async (provider: "google" | "apple") => {
@@ -79,13 +92,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  return <AuthContext.Provider value={{
-    account, loading, error,
-    login: (email, password) => authenticate(() => api.login({ email, password })),
-    register: (email, password, displayName) => authenticate(() => api.register({ email, password, displayName })),
-    loginWithProvider,
-    logout,
-  }}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider
+      value={{
+        account,
+        loading,
+        error,
+        login: (email, password) => authenticate(() => api.login({ email, password })),
+        register: (email, password, displayName) =>
+          authenticate(() => api.register({ email, password, displayName })),
+        loginWithProvider,
+        logout,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {

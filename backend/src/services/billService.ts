@@ -70,7 +70,7 @@ export class BillService {
 
   async setPaid(billId: string, ownerId: string, paid: boolean): Promise<Bill> {
     const bill = await this.requireBill(billId, ownerId);
-    const updated: Bill = { ...bill, paidAt: paid ? bill.paidAt ?? Date.now() : undefined };
+    const updated: Bill = { ...bill, paidAt: paid ? (bill.paidAt ?? Date.now()) : undefined };
     await this.repo.save(updated);
     return updated;
   }
@@ -111,13 +111,19 @@ export class BillService {
     return updated;
   }
 
-  async setPersonSettled(billId: string, ownerId: string, personId: string, settled: boolean): Promise<Bill> {
+  async setPersonSettled(
+    billId: string,
+    ownerId: string,
+    personId: string,
+    settled: boolean
+  ): Promise<Bill> {
     const bill = await this.requireBill(billId, ownerId);
     if (!bill.people.some((p) => p.id === personId)) throw notFound("Person");
     const already = bill.settledPersonIds.includes(personId);
     let settledPersonIds = bill.settledPersonIds;
     if (settled && !already) settledPersonIds = [...bill.settledPersonIds, personId];
-    if (!settled && already) settledPersonIds = bill.settledPersonIds.filter((id) => id !== personId);
+    if (!settled && already)
+      settledPersonIds = bill.settledPersonIds.filter((id) => id !== personId);
     const updated: Bill = { ...bill, settledPersonIds };
     await this.repo.save(updated);
     return updated;
@@ -140,7 +146,11 @@ export class BillService {
     return updated;
   }
 
-  async importReceipt(billId: string, ownerId: string, extraction: ExtractedReceipt): Promise<Bill> {
+  async importReceipt(
+    billId: string,
+    ownerId: string,
+    extraction: ExtractedReceipt
+  ): Promise<Bill> {
     const bill = await this.requireBill(billId, ownerId);
     const importedItems: BillItem[] = extraction.items.map((item) => ({
       id: randomUUID(),
@@ -181,7 +191,12 @@ export class BillService {
     return updated;
   }
 
-  async toggleAssignment(billId: string, ownerId: string, itemId: string, personId: string): Promise<Bill> {
+  async toggleAssignment(
+    billId: string,
+    ownerId: string,
+    itemId: string,
+    personId: string
+  ): Promise<Bill> {
     const bill = await this.requireBill(billId, ownerId);
     const item = bill.items.find((i) => i.id === itemId);
     if (!item) throw notFound("Item");

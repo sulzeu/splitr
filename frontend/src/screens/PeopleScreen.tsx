@@ -32,7 +32,12 @@ export function PeopleScreen({ onNext }: { onNext: () => void }) {
           onKeyDown={(e) => e.key === "Enter" && submit()}
           autoFocus
         />
-        <Button label="Add" onClick={submit} variant="secondary" style={{ marginLeft: 8, flexShrink: 0 }} />
+        <Button
+          label="Add"
+          onClick={submit}
+          variant="secondary"
+          style={{ marginLeft: 8, flexShrink: 0 }}
+        />
       </div>
 
       <Perforation />

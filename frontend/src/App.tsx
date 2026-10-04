@@ -45,14 +45,29 @@ function AppShell() {
     if (bill && (readOnly || bill.paidAt) && step !== "summary") {
       setStep("summary");
     } else if (bill && step === "home") {
-      setStep(readOnly ? "summary" : bill.items.length > 0 ? "assign" : bill.people.length > 0 ? "items" : "people");
+      setStep(
+        readOnly
+          ? "summary"
+          : bill.items.length > 0
+            ? "assign"
+            : bill.people.length > 0
+              ? "items"
+              : "people"
+      );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bill, readOnly]);
 
   return (
     <div className="app-shell">
-      {!authLoading && account && <div className="row-between body-faint" style={{ marginBottom: 16 }}><span>{account.displayName}</span><button className="btn-danger-text" onClick={() => void logout()}>Log out</button></div>}
+      {!authLoading && account && (
+        <div className="row-between body-faint" style={{ marginBottom: 16 }}>
+          <span>{account.displayName}</span>
+          <button className="btn-danger-text" onClick={() => void logout()}>
+            Log out
+          </button>
+        </div>
+      )}
       <ErrorBanner />
       {step !== "home" && <JoinCodeBanner />}
       {loading && step === "home" ? <p className="body-faint">Loading…</p> : renderStep()}
@@ -70,7 +85,21 @@ export default function App() {
 
 function AuthenticatedApp() {
   const { account, loading } = useAuth();
-  if (loading) return <div className="app-shell"><p className="body-faint">Loading...</p></div>;
-  if (!account) return <div className="app-shell"><AuthScreen /></div>;
-  return <BillProvider ownerId={account.id}><AppShell /></BillProvider>;
+  if (loading)
+    return (
+      <div className="app-shell">
+        <p className="body-faint">Loading...</p>
+      </div>
+    );
+  if (!account)
+    return (
+      <div className="app-shell">
+        <AuthScreen />
+      </div>
+    );
+  return (
+    <BillProvider ownerId={account.id}>
+      <AppShell />
+    </BillProvider>
+  );
 }

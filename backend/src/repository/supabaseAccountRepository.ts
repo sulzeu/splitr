@@ -24,13 +24,21 @@ export class SupabaseAccountRepository implements AccountRepository {
   }
 
   async getById(accountId: string): Promise<AccountRecord | undefined> {
-    const { data, error } = await this.client.from("accounts").select("*").eq("id", accountId).maybeSingle();
+    const { data, error } = await this.client
+      .from("accounts")
+      .select("*")
+      .eq("id", accountId)
+      .maybeSingle();
     if (error) throw error;
     return data ? this.toAccount(data as AccountRow) : undefined;
   }
 
   async getByEmail(email: string): Promise<AccountRecord | undefined> {
-    const { data, error } = await this.client.from("accounts").select("*").eq("email", email).maybeSingle();
+    const { data, error } = await this.client
+      .from("accounts")
+      .select("*")
+      .eq("email", email)
+      .maybeSingle();
     if (error) throw error;
     return data ? this.toAccount(data as AccountRow) : undefined;
   }

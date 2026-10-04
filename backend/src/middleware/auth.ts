@@ -2,13 +2,7 @@ import { Request, RequestHandler } from "express";
 import { AccountService } from "../services/accountService";
 import { unauthorized } from "../utils/httpError";
 
-declare global {
-  namespace Express {
-    interface Request {
-      accountId?: string;
-    }
-  }
-}
+export type AuthenticatedRequest = Request & { accountId?: string };
 
 function normalizeBearerToken(value: string | undefined): string | undefined {
   if (!value) return undefined;
@@ -20,11 +14,12 @@ function normalizeBearerToken(value: string | undefined): string | undefined {
 
 export function requireAuth(accountService: AccountService): RequestHandler {
   return async (req, _res, next) => {
-    const token = normalizeBearerToken(req.header("authorization"));
+    const authReq = req as AuthenticatedRequest;
+    const token = normalizeBearerToken(authReq.header("authorization"));
     try {
       const accountId = token ? await accountService.getAccountIdForToken(token) : undefined;
       if (!accountId) return next(unauthorized());
-      req.accountId = accountId;
+      authReq.accountId = accountId;
       return next();
     } catch (error) {
       return next(error);

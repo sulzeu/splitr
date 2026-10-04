@@ -23,7 +23,10 @@ type BillContextValue = {
   setPersonSettled: (personId: string, settled: boolean) => Promise<void>;
   addItem: (item: { name: string; price: number; quantity?: number }) => Promise<void>;
   importReceipt: (imageBase64: string, mimeType?: string) => Promise<void>;
-  updateItem: (itemId: string, patch: { name?: string; price?: number; quantity?: number }) => Promise<void>;
+  updateItem: (
+    itemId: string,
+    patch: { name?: string; price?: number; quantity?: number }
+  ) => Promise<void>;
   removeItem: (itemId: string) => Promise<void>;
   toggleAssignment: (itemId: string, personId: string) => Promise<void>;
   setGstMode: (mode: GstMode) => Promise<void>;
@@ -126,7 +129,7 @@ export function BillProvider({ children, ownerId }: { children: ReactNode; owner
             ? e.message
             : "Couldn't join that split. Try again."
       );
-          return false;
+      return false;
     } finally {
       setLoading(false);
     }
@@ -153,15 +156,19 @@ export function BillProvider({ children, ownerId }: { children: ReactNode; owner
     setTitle: (title) => handle(() => api.updateSettings(bill!.id, { title })),
     addPerson: (name) => handle(() => api.addPerson(bill!.id, name)),
     removePerson: (personId) => handle(() => api.removePerson(bill!.id, personId)),
-    setPersonSettled: (personId, settled) => handle(() => api.setPersonSettled(bill!.id, personId, settled)),
+    setPersonSettled: (personId, settled) =>
+      handle(() => api.setPersonSettled(bill!.id, personId, settled)),
     addItem: (item) => handle(() => api.addItem(bill!.id, item)),
-    importReceipt: (imageBase64, mimeType) => handle(async () => (await api.importReceipt(bill!.id, imageBase64, mimeType)).bill),
+    importReceipt: (imageBase64, mimeType) =>
+      handle(async () => (await api.importReceipt(bill!.id, imageBase64, mimeType)).bill),
     updateItem: (itemId, patch) => handle(() => api.updateItem(bill!.id, itemId, patch)),
     removeItem: (itemId) => handle(() => api.removeItem(bill!.id, itemId)),
-    toggleAssignment: (itemId, personId) => handle(() => api.toggleAssignment(bill!.id, itemId, personId)),
+    toggleAssignment: (itemId, personId) =>
+      handle(() => api.toggleAssignment(bill!.id, itemId, personId)),
     setGstMode: (mode) => handle(() => api.updateSettings(bill!.id, { gstMode: mode })),
     setTipAmount: (amount) => handle(() => api.updateSettings(bill!.id, { tipAmount: amount })),
-    setServiceFeeAmount: (amount) => handle(() => api.updateSettings(bill!.id, { serviceFeeAmount: amount })),
+    setServiceFeeAmount: (amount) =>
+      handle(() => api.updateSettings(bill!.id, { serviceFeeAmount: amount })),
     setBillPaid: (paid) => handle(() => api.setBillPaid(bill!.id, paid)),
   };
 

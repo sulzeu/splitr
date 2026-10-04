@@ -1,7 +1,6 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Bill } from "../schemas/bills";
 import { BillRepository } from "./billRepository";
-import { version } from "os";
 
 export class SupabaseBillRepository implements BillRepository {
   constructor(private client: SupabaseClient) {}
@@ -12,7 +11,11 @@ export class SupabaseBillRepository implements BillRepository {
   }
 
   async getById(billId: string): Promise<Bill | undefined> {
-    const { data, error } = await this.client.from("bills").select("*").eq("id", billId).maybeSingle();
+    const { data, error } = await this.client
+      .from("bills")
+      .select("*")
+      .eq("id", billId)
+      .maybeSingle();
     if (error) throw error;
     return data ? this.fromRow(data as Bill) : undefined;
   }
@@ -28,14 +31,23 @@ export class SupabaseBillRepository implements BillRepository {
   }
 
   async listByOwner(ownerId: string, paid: boolean): Promise<Bill[]> {
-    const query = this.client.from("bills").select("*").eq("owner_id", ownerId).order("created_at", { ascending: false });
-    const { data, error } = paid ? await query.not("paid_at", "is", null) : await query.is("paid_at", null);
+    const query = this.client
+      .from("bills")
+      .select("*")
+      .eq("owner_id", ownerId)
+      .order("created_at", { ascending: false });
+    const { data, error } = paid
+      ? await query.not("paid_at", "is", null)
+      : await query.is("paid_at", null);
     if (error) throw error;
     return (data ?? []).map((row) => this.fromRow(row as Bill));
   }
 
   async save(bill: Bill): Promise<void> {
-    const { error } = await this.client.from("bills").update(this.toRow(bill, bill.joinCode)).eq("id", bill.id);
+    const { error } = await this.client
+      .from("bills")
+      .update(this.toRow(bill, bill.joinCode))
+      .eq("id", bill.id);
     if (error) throw error;
   }
 
@@ -55,7 +67,7 @@ export class SupabaseBillRepository implements BillRepository {
       receipt_total: bill.receiptTotal ?? null,
       settled_person_ids: bill.settledPersonIds,
       paid_at: bill.paidAt ?? null,
-      version: bill.version ?? 1
+      version: bill.version ?? 1,
     };
   }
 
@@ -75,7 +87,7 @@ export class SupabaseBillRepository implements BillRepository {
       receiptTotal: row.receiptTotal ?? undefined,
       settledPersonIds: row.settledPersonIds,
       paidAt: row.paidAt ?? undefined,
-      version: row.version ?? 1
+      version: row.version ?? 1,
     };
   }
 }

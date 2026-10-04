@@ -27,7 +27,9 @@ describe("AuthScreen", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Create a personal account" }));
     fireEvent.change(screen.getByPlaceholderText("Name"), { target: { value: "Ada" } });
-    fireEvent.change(screen.getByPlaceholderText("Email"), { target: { value: "ada@example.com" } });
+    fireEvent.change(screen.getByPlaceholderText("Email"), {
+      target: { value: "ada@example.com" },
+    });
     fireEvent.change(screen.getByPlaceholderText("Password"), { target: { value: "secret123" } });
     fireEvent.click(screen.getByRole("button", { name: "Create account" }));
 

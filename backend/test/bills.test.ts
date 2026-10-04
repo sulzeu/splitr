@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import request from "supertest";
 import { createApp } from "../src/app";
 import { InMemoryBillRepository } from "../src/repository/inMemoryBillRepository";
@@ -13,7 +13,12 @@ async function makeApp() {
   return { app, token: auth.body.token };
 }
 
-function api(app: ReturnType<typeof createApp>, token: string, method: "get" | "post" | "patch", path: string) {
+function api(
+  app: ReturnType<typeof createApp>,
+  token: string,
+  method: "get" | "post" | "patch",
+  path: string
+) {
   return request(app)[method](path).set("Authorization", `Bearer ${token}`);
 }
 
@@ -45,7 +50,9 @@ describe("bills API", () => {
     expect(before.body.active).toHaveLength(1);
     expect(before.body.paid).toHaveLength(0);
 
-    const paid = await api(app, token, "patch", `/api/bills/${created.body.id}/paid`).send({ paid: true });
+    const paid = await api(app, token, "patch", `/api/bills/${created.body.id}/paid`).send({
+      paid: true,
+    });
     expect(paid.body.paidAt).toEqual(expect.any(Number));
 
     const after = await api(app, token, "get", "/api/auth/me/bills");
@@ -92,8 +99,10 @@ describe("bills API", () => {
   it("rejects invalid input with 400", async () => {
     const { app, token } = await makeApp();
     const created = await api(app, token, "post", "/api/bills").send({});
-    const res = await api(app, token, "post", `/api/bills/${created.body.id}/items`)
-      .send({ name: "", price: -5 });
+    const res = await api(app, token, "post", `/api/bills/${created.body.id}/items`).send({
+      name: "",
+      price: -5,
+    });
     expect(res.status).toBe(400);
   });
 
@@ -102,35 +111,46 @@ describe("bills API", () => {
     const created = await api(app, token, "post", "/api/bills").send({ title: "Test dinner" });
     const billId = created.body.id;
 
-    const alice = await api(app, token, "post", `/api/bills/${billId}/people`).send({ name: "Alice" });
+    const alice = await api(app, token, "post", `/api/bills/${billId}/people`).send({
+      name: "Alice",
+    });
     const bob = await api(app, token, "post", `/api/bills/${billId}/people`).send({ name: "Bob" });
-    const cara = await api(app, token, "post", `/api/bills/${billId}/people`).send({ name: "Cara" });
+    const cara = await api(app, token, "post", `/api/bills/${billId}/people`).send({
+      name: "Cara",
+    });
     const aliceId = alice.body.people.find((p: any) => p.name === "Alice").id;
     const bobId = bob.body.people.find((p: any) => p.name === "Bob").id;
     const caraId = cara.body.people.find((p: any) => p.name === "Cara").id;
 
-    const steak = await api(app, token, "post", `/api/bills/${billId}/items`)
-      .send({ name: "Steak", price: 34.5 });
+    const steak = await api(app, token, "post", `/api/bills/${billId}/items`).send({
+      name: "Steak",
+      price: 34.5,
+    });
     const steakId = steak.body.items[0].id;
 
-    const wine = await api(app, token, "post", `/api/bills/${billId}/items`)
-      .send({ name: "Bottle of wine", price: 10.01 });
+    const wine = await api(app, token, "post", `/api/bills/${billId}/items`).send({
+      name: "Bottle of wine",
+      price: 10.01,
+    });
     const wineId = wine.body.items.find((i: any) => i.name === "Bottle of wine").id;
 
-    await api(app, token, "patch", `/api/bills/${billId}`)
-      .send({ serviceFeeAmount: 2.5 });
+    await api(app, token, "patch", `/api/bills/${billId}`).send({ serviceFeeAmount: 2.5 });
 
     // Assign steak to Alice only
-    await api(app, token, "post", `/api/bills/${billId}/items/${steakId}/assignments`)
-      .send({ personId: aliceId });
+    await api(app, token, "post", `/api/bills/${billId}/items/${steakId}/assignments`).send({
+      personId: aliceId,
+    });
 
     // Wine shared by all three
-    await api(app, token, "post", `/api/bills/${billId}/items/${wineId}/assignments`)
-      .send({ personId: aliceId });
-    await api(app, token, "post", `/api/bills/${billId}/items/${wineId}/assignments`)
-      .send({ personId: bobId });
-    await api(app, token, "post", `/api/bills/${billId}/items/${wineId}/assignments`)
-      .send({ personId: caraId });
+    await api(app, token, "post", `/api/bills/${billId}/items/${wineId}/assignments`).send({
+      personId: aliceId,
+    });
+    await api(app, token, "post", `/api/bills/${billId}/items/${wineId}/assignments`).send({
+      personId: bobId,
+    });
+    await api(app, token, "post", `/api/bills/${billId}/items/${wineId}/assignments`).send({
+      personId: caraId,
+    });
 
     const splitRes = await api(app, token, "get", `/api/bills/${billId}/split`);
     expect(splitRes.status).toBe(200);
@@ -154,13 +174,18 @@ describe("bills API", () => {
     expect(Math.abs(bobPersonTotal.total - caraPersonTotal.total)).toBeLessThanOrEqual(0.01);
 
     // Mark Alice as settled and confirm it sticks
-    const settledRes = await api(app, token, "patch", `/api/bills/${billId}/people/${aliceId}/settled`)
-      .send({ settled: true });
+    const settledRes = await api(
+      app,
+      token,
+      "patch",
+      `/api/bills/${billId}/people/${aliceId}/settled`
+    ).send({ settled: true });
     expect(settledRes.body.settledPersonIds).toContain(aliceId);
 
     // Toggling assignment off removes the person's share
-    await api(app, token, "post", `/api/bills/${billId}/items/${steakId}/assignments`)
-      .send({ personId: aliceId }); // toggles OFF since already assigned
+    await api(app, token, "post", `/api/bills/${billId}/items/${steakId}/assignments`).send({
+      personId: aliceId,
+    }); // toggles OFF since already assigned
     const afterUnassign = await api(app, token, "get", `/api/bills/${billId}/split`);
     const unassignedSubtotal = afterUnassign.body.unassignedSubtotal;
     expect(unassignedSubtotal).toBeCloseTo(34.5, 2);

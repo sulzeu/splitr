@@ -5,9 +5,9 @@ const fromCents = (cents: number): number => Math.round(cents) / 100;
 
 /**
  * Distributes an amount proportionally based on given weights.
- * @param totalCents 
- * @param weights 
- * @returns an array of amounts in cents, same length as weights, summing to totalCents. 
+ * @param totalCents
+ * @param weights
+ * @returns an array of amounts in cents, same length as weights, summing to totalCents.
  * Each amount is rounded to the nearest cent, with any rounding remainder distributed to the largest weights.
  */
 function distributeProportionally(totalCents: number, weights: number[]): number[] {
@@ -20,9 +20,7 @@ function distributeProportionally(totalCents: number, weights: number[]): number
   let remainder = totalCents - floored.reduce((a, b) => a + b, 0);
 
   // Give the leftover cents to the entries with the largest fractional remainder.
-  const order = raw
-    .map((r, i) => ({ i, frac: r - Math.floor(r) }))
-    .sort((a, b) => b.frac - a.frac);
+  const order = raw.map((r, i) => ({ i, frac: r - Math.floor(r) })).sort((a, b) => b.frac - a.frac);
 
   const result = [...floored];
   for (let k = 0; k < order.length && remainder > 0; k++, remainder--) {
@@ -33,7 +31,7 @@ function distributeProportionally(totalCents: number, weights: number[]): number
 
 /**
  * Calculates the split for a given bill, distributing the total amount among the people based on their assigned items.
- * @param bill 
+ * @param bill
  * @returns the split result for the given bill, including each person's subtotal, GST share, tip share, service fee share, and total.
  */
 export function calculateSplit(bill: Bill): SplitResult {
@@ -65,13 +63,11 @@ export function calculateSplit(bill: Bill): SplitResult {
 
   const subtotalWeights = people.map((p) => personSubtotalCents[p.id]);
   const totalSubtotalCents = subtotalWeights.reduce((a, b) => a + b, 0);
-  
-  // GST 
+
+  // GST
   let gstShareCents: number[];
   if (bill.gstMode === "inclusive") {
-    gstShareCents = subtotalWeights.map((cents) =>
-      Math.round(cents - cents / (1 + bill.gstRate))
-    );
+    gstShareCents = subtotalWeights.map((cents) => Math.round(cents - cents / (1 + bill.gstRate)));
   } else if (bill.gstMode === "exclusive") {
     const totalGstCents = Math.round(totalSubtotalCents * bill.gstRate);
     gstShareCents = distributeProportionally(totalGstCents, subtotalWeights);

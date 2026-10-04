@@ -98,7 +98,12 @@ export function ItemsScreen({ onNext }: { onNext: () => void }) {
           inputMode="decimal"
           onKeyDown={(e) => e.key === "Enter" && submit()}
         />
-        <Button label="Add" onClick={submit} variant="secondary" style={{ marginLeft: 8, flexShrink: 0 }} />
+        <Button
+          label="Add"
+          onClick={submit}
+          variant="secondary"
+          style={{ marginLeft: 8, flexShrink: 0 }}
+        />
       </div>
 
       <div style={{ marginTop: 8 }}>

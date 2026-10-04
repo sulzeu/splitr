@@ -2,23 +2,32 @@ import { execFile } from "child_process";
 import path from "path";
 import { extractedReceiptSchema, ExtractedReceipt } from "../schemas/receipt";
 
-export async function extractReceipt(imageBase64: string, mimeType?: string): Promise<ExtractedReceipt> {
-  const scriptPath = process.env.SPLITRECEIPT_INFERENCE_SCRIPT ??
+export async function extractReceipt(
+  imageBase64: string,
+  mimeType?: string
+): Promise<ExtractedReceipt> {
+  const scriptPath =
+    process.env.SPLITRECEIPT_INFERENCE_SCRIPT ??
     path.resolve(process.cwd(), "../model/receipt_inference.py");
   const python = process.env.SPLITRECEIPT_PYTHON ?? "python3";
 
   try {
     const stdout = await new Promise<string>((resolve, reject) => {
-      const child = execFile(python, [scriptPath], {
-        maxBuffer: 1024 * 1024,
-        timeout: 120_000,
-      }, (error, output, stderr) => {
-        if (error) {
-          reject(new Error(stderr.trim() || error.message));
-          return;
+      const child = execFile(
+        python,
+        [scriptPath],
+        {
+          maxBuffer: 1024 * 1024,
+          timeout: 120_000,
+        },
+        (error, output, stderr) => {
+          if (error) {
+            reject(new Error(stderr.trim() || error.message));
+            return;
+          }
+          resolve(output);
         }
-        resolve(output);
-      });
+      );
       child.stdin?.end(JSON.stringify({ imageBase64, mimeType }));
     });
     return extractedReceiptSchema.parse(JSON.parse(stdout));

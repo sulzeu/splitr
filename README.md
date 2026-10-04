@@ -16,7 +16,7 @@ A bill-splitting app that lets a table split a receipt fairly — proportional t
 | AI receipt scanning (Qwen2-VL) | Fine-tuned, integrated |
 | Shared types/schemas (backend - frontend) | In progress — not yet unified |
 | Deployment | Not yet deployed |
-| Tests | Not yet added |
+| Tests | Added with coverage gates |
 
 ---
 
@@ -114,14 +114,25 @@ Run the same checks CI enforces before opening a PR:
 ```bash
 # Backend
 cd backend
-npm test
+npm run lint
+npm run format
+npm run test:coverage
 npm run build
 
 # Frontend
 cd frontend
-npm test
+npm run lint
+npm run format
+npm run test:coverage
 npm run build
 ```
+
+CI enforces a small release gate with linting, formatting, coverage floors, and both backend/frontend builds. Coverage floors are intentionally set to the current baseline so we reject regressions without forcing a large test expansion while the app is still stabilizing.
+
+Current floor targets:
+
+- Backend: 78% statements, 68% branches, 76% functions, 80% lines
+- Frontend: 67% statements, 62% branches, 66% functions, 70% lines
 
 Set `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in a `.env` file to use Postgres persistence; otherwise the backend falls back to in-memory storage automatically.
 

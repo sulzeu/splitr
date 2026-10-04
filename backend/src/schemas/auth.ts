@@ -23,7 +23,6 @@ export const accountRecordSchema = accountSchema.extend({
 });
 export type AccountRecord = z.infer<typeof accountRecordSchema>;
 
-
 export const credentialsSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),

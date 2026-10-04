@@ -54,28 +54,28 @@ Registration and login return a bearer token. Send it as
 public for collaboration; direct bill access and mutations belong to the
 owning account.
 
-| Method | Path | Body | Notes |
-|---|---|---|---|
-| POST | `/api/auth/register` | `{ email, password, displayName }` | Creates an account and returns a token |
-| POST | `/api/auth/login` | `{ email, password }` | Returns a token |
-| POST | `/api/auth/oauth` | `{ accessToken }` | Exchanges a verified Supabase Google/Apple token for a SplitReceipt token |
-| GET | `/api/auth/me` | - | Current account |
-| GET | `/api/auth/me/bills` | - | Returns `{ active, paid }` |
-| POST | `/api/auth/logout` | - | Revokes the current session |
-| POST | `/api/bills` | `{ title? }` | Creates an owned bill |
-| GET | `/api/bills/:billId` | - | Owner only |
-| GET | `/api/bills/by-code/:joinCode` | - | Public, case-insensitive lookup |
-| GET | `/api/bills/by-code/:joinCode/split` | - | Public read-only split calculation |
-| PATCH | `/api/bills/:billId` | Settings fields | Owner only |
-| PATCH | `/api/bills/:billId/paid` | `{ paid: boolean }` | Moves bill between active and paid history |
-| GET | `/api/bills/:billId/split` | - | Owner only |
-| POST | `/api/bills/:billId/people` | `{ name }` | Owner only |
-| PATCH | `/api/bills/:billId/people/:personId/settled` | `{ settled: boolean }` | Settles one person |
-| POST | `/api/bills/:billId/items` | `{ name, price, quantity? }` | Owner only |
-| POST | `/api/bills/:billId/receipt` | `{ imageBase64 }` | Runs the local fine-tuned Qwen2-VL adapter and appends extracted items |
-| PATCH | `/api/bills/:billId/items/:itemId` | Item fields | Owner only |
-| DELETE | `/api/bills/:billId/items/:itemId` | - | Owner only |
-| POST | `/api/bills/:billId/items/:itemId/assignments` | `{ personId }` | Toggles an assignment |
+| Method | Path                                           | Body                               | Notes                                                                     |
+| ------ | ---------------------------------------------- | ---------------------------------- | ------------------------------------------------------------------------- |
+| POST   | `/api/auth/register`                           | `{ email, password, displayName }` | Creates an account and returns a token                                    |
+| POST   | `/api/auth/login`                              | `{ email, password }`              | Returns a token                                                           |
+| POST   | `/api/auth/oauth`                              | `{ accessToken }`                  | Exchanges a verified Supabase Google/Apple token for a SplitReceipt token |
+| GET    | `/api/auth/me`                                 | -                                  | Current account                                                           |
+| GET    | `/api/auth/me/bills`                           | -                                  | Returns `{ active, paid }`                                                |
+| POST   | `/api/auth/logout`                             | -                                  | Revokes the current session                                               |
+| POST   | `/api/bills`                                   | `{ title? }`                       | Creates an owned bill                                                     |
+| GET    | `/api/bills/:billId`                           | -                                  | Owner only                                                                |
+| GET    | `/api/bills/by-code/:joinCode`                 | -                                  | Public, case-insensitive lookup                                           |
+| GET    | `/api/bills/by-code/:joinCode/split`           | -                                  | Public read-only split calculation                                        |
+| PATCH  | `/api/bills/:billId`                           | Settings fields                    | Owner only                                                                |
+| PATCH  | `/api/bills/:billId/paid`                      | `{ paid: boolean }`                | Moves bill between active and paid history                                |
+| GET    | `/api/bills/:billId/split`                     | -                                  | Owner only                                                                |
+| POST   | `/api/bills/:billId/people`                    | `{ name }`                         | Owner only                                                                |
+| PATCH  | `/api/bills/:billId/people/:personId/settled`  | `{ settled: boolean }`             | Settles one person                                                        |
+| POST   | `/api/bills/:billId/items`                     | `{ name, price, quantity? }`       | Owner only                                                                |
+| POST   | `/api/bills/:billId/receipt`                   | `{ imageBase64 }`                  | Runs the local fine-tuned Qwen2-VL adapter and appends extracted items    |
+| PATCH  | `/api/bills/:billId/items/:itemId`             | Item fields                        | Owner only                                                                |
+| DELETE | `/api/bills/:billId/items/:itemId`             | -                                  | Owner only                                                                |
+| POST   | `/api/bills/:billId/items/:itemId/assignments` | `{ personId }`                     | Toggles an assignment                                                     |
 
 The `BillRepository` and `AccountRepository` interfaces keep persistence
 separate from business logic. `server.ts` selects the Supabase implementations
@@ -92,6 +92,7 @@ frontend origin for production. Configure the frontend with
 `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. Keep
 `SUPABASE_SERVICE_ROLE_KEY` backend-only; the backend verifies OAuth tokens
 before creating the application's own session.
+
 # SplitReceipt Backend
 
 REST API that owns the bill-splitting logic and state, so the web, iOS, and
@@ -173,25 +174,26 @@ response, so a client can just replace its local state wholesale — no
 partial-patch merging logic needed on the client side. This also happens
 to be the simplest model for polling-based multi-device sync.
 
-| Method | Path | Body | Notes |
-|---|---|---|---|
-| POST | `/api/bills` | `{ title? }` | Creates a bill, returns it with a fresh `joinCode` |
-| POST | `/api/auth/register` | `{ email, password, displayName }` | Creates an account and returns a bearer token |
-| POST | `/api/auth/login` | `{ email, password }` | Returns a bearer token |
-| GET | `/api/auth/me` | — | Current account |
-| GET | `/api/auth/me/bills` | — | Returns `{ active, paid }` bill history |
-| POST | `/api/auth/logout` | — | Revokes the current session |
-| GET | `/api/bills/:billId` | — | |
-| GET | `/api/bills/by-code/:joinCode` | — | case-insensitive |
-| PATCH | `/api/bills/:billId` | `{ title?, gstMode?, gstRate?, tipAmount?, serviceFeeAmount? }` | any subset |
-| GET | `/api/bills/:billId/split` | — | returns `SplitResult`, not a `Bill` |
-| POST | `/api/bills/:billId/people` | `{ name }` | |
-| PATCH | `/api/bills/:billId/people/:personId/settled` | `{ settled: boolean }` | "mark as paid" |
-| POST | `/api/bills/:billId/items` | `{ name, price, quantity? }` | |
-| PATCH | `/api/bills/:billId/items/:itemId` | `{ name?, price?, quantity? }` | any subset |
-| POST | `/api/bills/:billId/items/:itemId/assignments` | `{ personId }` | **toggles** — calling it again for the same person un-assigns them |
+| Method | Path                                           | Body                                                            | Notes                                                              |
+| ------ | ---------------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------ |
+| POST   | `/api/bills`                                   | `{ title? }`                                                    | Creates a bill, returns it with a fresh `joinCode`                 |
+| POST   | `/api/auth/register`                           | `{ email, password, displayName }`                              | Creates an account and returns a bearer token                      |
+| POST   | `/api/auth/login`                              | `{ email, password }`                                           | Returns a bearer token                                             |
+| GET    | `/api/auth/me`                                 | —                                                               | Current account                                                    |
+| GET    | `/api/auth/me/bills`                           | —                                                               | Returns `{ active, paid }` bill history                            |
+| POST   | `/api/auth/logout`                             | —                                                               | Revokes the current session                                        |
+| GET    | `/api/bills/:billId`                           | —                                                               |                                                                    |
+| GET    | `/api/bills/by-code/:joinCode`                 | —                                                               | case-insensitive                                                   |
+| PATCH  | `/api/bills/:billId`                           | `{ title?, gstMode?, gstRate?, tipAmount?, serviceFeeAmount? }` | any subset                                                         |
+| GET    | `/api/bills/:billId/split`                     | —                                                               | returns `SplitResult`, not a `Bill`                                |
+| POST   | `/api/bills/:billId/people`                    | `{ name }`                                                      |                                                                    |
+| PATCH  | `/api/bills/:billId/people/:personId/settled`  | `{ settled: boolean }`                                          | "mark as paid"                                                     |
+| POST   | `/api/bills/:billId/items`                     | `{ name, price, quantity? }`                                    |                                                                    |
+| PATCH  | `/api/bills/:billId/items/:itemId`             | `{ name?, price?, quantity? }`                                  | any subset                                                         |
+| POST   | `/api/bills/:billId/items/:itemId/assignments` | `{ personId }`                                                  | **toggles** — calling it again for the same person un-assigns them |
 
 Errors are `{ "error": string }` with an appropriate status code (400 for
+
 ## Operational follow-ups
 
 - **No real-time push.** Clients poll `GET /bills/:id` (or `/split`). Adding
@@ -204,4 +206,3 @@ Errors are `{ "error": string }` with an appropriate status code (400 for
 - **CORS is wide open** (`cors()` with no options) for local development
   against the web/RN clients. Restrict `origin` before deploying anywhere
   public.
-

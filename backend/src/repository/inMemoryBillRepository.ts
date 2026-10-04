@@ -25,7 +25,9 @@ export class InMemoryBillRepository implements BillRepository {
   }
 
   async listByOwner(ownerId: string, paid: boolean): Promise<Bill[]> {
-    return [...this.billsById.values()].filter((bill) => bill.ownerId === ownerId && Boolean(bill.paidAt) === paid);
+    return [...this.billsById.values()].filter(
+      (bill) => bill.ownerId === ownerId && Boolean(bill.paidAt) === paid
+    );
   }
 
   async save(bill: Bill): Promise<void> {

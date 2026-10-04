@@ -20,7 +20,13 @@ export function ErrorBanner() {
       </span>
       <button
         onClick={clearError}
-        style={{ background: "none", border: "none", color: "var(--outstanding)", cursor: "pointer", fontSize: 16 }}
+        style={{
+          background: "none",
+          border: "none",
+          color: "var(--outstanding)",
+          cursor: "pointer",
+          fontSize: 16,
+        }}
         aria-label="Dismiss"
       >
         ✕

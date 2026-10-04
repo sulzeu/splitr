@@ -1,4 +1,3 @@
-
 export function Perforation({ marginVertical }: { marginVertical?: number }) {
   return (
     <div

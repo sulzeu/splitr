@@ -1,7 +1,7 @@
-import { Router } from "express";
+import { Request, Router } from "express";
 import { BillService } from "../services/billService";
 import { asyncHandler } from "../middleware/asyncHandler";
-import { requireAuth } from "../middleware/auth";
+import { AuthenticatedRequest, requireAuth } from "../middleware/auth";
 import { AccountService } from "../services/accountService";
 import { unauthorized } from "../utils/httpError";
 import { extractReceipt } from "../services/receiptService";
@@ -17,12 +17,16 @@ import {
 } from "../schemas/bills";
 import { requestedReceiptSchema } from "../schemas/receipt";
 
-export function createBillsRouter(billService: BillService, accountService: AccountService): Router {
+export function createBillsRouter(
+  billService: BillService,
+  accountService: AccountService
+): Router {
   const router = Router();
   const auth = requireAuth(accountService);
-  const accountId = (req: Express.Request): string => {
-    if (!req.accountId) throw unauthorized();
-    return req.accountId;
+  const accountId = (req: Request): string => {
+    const authReq = req as AuthenticatedRequest;
+    if (!authReq.accountId) throw unauthorized();
+    return authReq.accountId;
   };
 
   router.post(
@@ -114,7 +118,11 @@ export function createBillsRouter(billService: BillService, accountService: Acco
     "/:billId/people/:personId",
     auth,
     asyncHandler(async (req, res) => {
-      const bill = await billService.removePerson(req.params.billId, accountId(req), req.params.personId);
+      const bill = await billService.removePerson(
+        req.params.billId,
+        accountId(req),
+        req.params.personId
+      );
       res.json(bill);
     })
   );
@@ -124,7 +132,12 @@ export function createBillsRouter(billService: BillService, accountService: Acco
     auth,
     asyncHandler(async (req, res) => {
       const { settled } = setSettledSchema.parse(req.body);
-      const bill = await billService.setPersonSettled(req.params.billId, accountId(req), req.params.personId, settled);
+      const bill = await billService.setPersonSettled(
+        req.params.billId,
+        accountId(req),
+        req.params.personId,
+        settled
+      );
       res.json(bill);
     })
   );
@@ -146,7 +159,12 @@ export function createBillsRouter(billService: BillService, accountService: Acco
     auth,
     asyncHandler(async (req, res) => {
       const patch = updateItemSchema.parse(req.body);
-      const bill = await billService.updateItem(req.params.billId, accountId(req), req.params.itemId, patch);
+      const bill = await billService.updateItem(
+        req.params.billId,
+        accountId(req),
+        req.params.itemId,
+        patch
+      );
       res.json(bill);
     })
   );
@@ -155,7 +173,11 @@ export function createBillsRouter(billService: BillService, accountService: Acco
     "/:billId/items/:itemId",
     auth,
     asyncHandler(async (req, res) => {
-      const bill = await billService.removeItem(req.params.billId, accountId(req), req.params.itemId);
+      const bill = await billService.removeItem(
+        req.params.billId,
+        accountId(req),
+        req.params.itemId
+      );
       res.json(bill);
     })
   );
@@ -165,7 +187,12 @@ export function createBillsRouter(billService: BillService, accountService: Acco
     auth,
     asyncHandler(async (req, res) => {
       const { personId } = toggleAssignmentSchema.parse(req.body);
-      const bill = await billService.toggleAssignment(req.params.billId, accountId(req), req.params.itemId, personId);
+      const bill = await billService.toggleAssignment(
+        req.params.billId,
+        accountId(req),
+        req.params.itemId,
+        personId
+      );
       res.json(bill);
     })
   );
