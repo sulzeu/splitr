@@ -51,4 +51,28 @@ describe("auth guard", () => {
     expect(res.body.email).toBe("owner@example.com");
     expect(res.body.displayName).toBe("Owner");
   });
+
+  it("rejects duplicate accounts and invalid credentials", async () => {
+    const app = createApp(new InMemoryBillRepository(), new InMemoryAccountRepository());
+
+    const first = await request(app).post("/api/auth/register").send({
+      email: "dup@example.com",
+      password: "password123",
+      displayName: "First",
+    });
+    expect(first.status).toBe(201);
+
+    const duplicate = await request(app).post("/api/auth/register").send({
+      email: "dup@example.com",
+      password: "password123",
+      displayName: "Second",
+    });
+    expect(duplicate.status).toBe(409);
+
+    const badLogin = await request(app).post("/api/auth/login").send({
+      email: "dup@example.com",
+      password: "wrong-password",
+    });
+    expect(badLogin.status).toBe(401);
+  });
 });
