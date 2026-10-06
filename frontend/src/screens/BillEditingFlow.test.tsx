@@ -151,6 +151,9 @@ describe("bill editing flow", () => {
       bill: clone(bill),
       extraction: { items: [], total: 0 },
     }));
+    vi.mocked(api.importReceipt).mockImplementationOnce(async () => {
+      throw new Error("Model returned invalid or incomplete JSON");
+    });
     vi.mocked(api.removeItem).mockImplementation(async (_billId, itemId) => {
       bill = {
         ...bill,
@@ -220,8 +223,16 @@ describe("bill editing flow", () => {
     fireEvent.change(receiptInput as HTMLInputElement, {
       target: { files: [new File(["receipt"], "receipt.png", { type: "image/png" })] },
     });
+    await screen.findByRole("dialog", { name: "Check receipt crop" });
+    fireEvent.click(screen.getByRole("button", { name: "Scan full image" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Model returned invalid or incomplete JSON"
+    );
+    expect(screen.getByRole("dialog", { name: "Check receipt crop" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Scan full image" }));
+    await waitFor(() => expect(api.importReceipt).toHaveBeenCalledTimes(2));
     await waitFor(() =>
-      expect(api.importReceipt).toHaveBeenCalledWith("bill-1", expect.any(String), "image/png")
+      expect(screen.queryByRole("dialog", { name: "Check receipt crop" })).not.toBeInTheDocument()
     );
 
     fireEvent.change(screen.getByPlaceholderText("Item name"), {

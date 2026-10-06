@@ -47,6 +47,45 @@ describe("receipt upload body size", () => {
     expect(extractReceipt).toHaveBeenCalledWith(imageBase64, "image/png");
   });
 
+  it("passes a full reference image with the selected crop for extraction", async () => {
+    const { app, token, billId } = await setup();
+    const imageBase64 = "Y3JvcA==";
+    const referenceImageBase64 = "ZnVsbA==";
+
+    const response = await request(app)
+      .post(`/api/bills/${billId}/receipt`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        imageBase64,
+        mimeType: "image/jpeg",
+        referenceImageBase64,
+        referenceMimeType: "image/png",
+      });
+
+    expect(response.status).toBe(200);
+    expect(extractReceipt).toHaveBeenCalledWith(
+      imageBase64,
+      "image/jpeg",
+      referenceImageBase64,
+      "image/png"
+    );
+  });
+
+  it("rejects a pair of images over the combined limit", async () => {
+    const { app, token, billId } = await setup();
+
+    const response = await request(app)
+      .post(`/api/bills/${billId}/receipt`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        imageBase64: "A".repeat(7_600_000),
+        referenceImageBase64: "B".repeat(7_600_000),
+      });
+
+    expect(response.status).toBe(400);
+    expect(extractReceipt).not.toHaveBeenCalled();
+  });
+
   it("returns a clean 413 when the receipt body exceeds the upload limit", async () => {
     const { app, token, billId } = await setup();
 

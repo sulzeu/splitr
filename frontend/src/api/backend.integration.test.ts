@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp } from "../../../backend/src/app";
 import { InMemoryBillRepository } from "../../../backend/src/repository/inMemoryBillRepository";
+import { extractReceipt } from "../../../backend/src/services/receiptService";
+
+vi.mock("../../../backend/src/services/receiptService", () => ({
+  extractReceipt: vi.fn().mockResolvedValue({ items: [], total: 0 }),
+}));
 
 describe("frontend API client with the backend", () => {
   afterEach(() => {
@@ -49,14 +54,26 @@ describe("frontend API client with the backend", () => {
       expect(bill).toMatchObject({
         title: "API integration dinner",
         ownerId: registered.account.id,
-        people: [],
+        people: [{ id: registered.account.id, name: registered.account.displayName }],
         items: [],
       });
+      const receiptResult = await api.importReceipt(bill.id, "cropped-image", "image/jpeg", {
+        imageBase64: "full-image",
+        mimeType: "image/png",
+      });
+      expect(receiptResult.extraction).toEqual({ items: [], total: 0 });
+      expect(extractReceipt).toHaveBeenCalledWith(
+        "cropped-image",
+        "image/jpeg",
+        "full-image",
+        "image/png"
+      );
 
+      const ownerId = bill.people[0].id;
       const ada = await api.addPerson(bill.id, "Ada");
-      const adaId = ada.people[0].id;
+      const adaId = ada.people[1].id;
       const ben = await api.addPerson(bill.id, "Ben");
-      const benId = ben.people[1].id;
+      const benId = ben.people[2].id;
 
       const pastaBill = await api.addItem(bill.id, { name: "Pasta", price: 20 });
       const pastaId = pastaBill.items[0].id;
@@ -75,6 +92,12 @@ describe("frontend API client with the backend", () => {
       const split = await api.getSplit(bill.id);
       expect(split).toEqual({
         personTotals: [
+          expect.objectContaining({
+            personId: ownerId,
+            itemsSubtotal: 0,
+            tipShare: 0,
+            total: 0,
+          }),
           expect.objectContaining({
             personId: adaId,
             itemsSubtotal: 25,
@@ -103,7 +126,7 @@ describe("frontend API client with the backend", () => {
 
       const temporaryPersonBill = await api.addPerson(bill.id, "Temporary person");
       const temporaryPersonId = temporaryPersonBill.people[2].id;
-      expect((await api.removePerson(bill.id, temporaryPersonId)).people).toHaveLength(2);
+      expect((await api.removePerson(bill.id, temporaryPersonId)).people).toHaveLength(3);
 
       await api.logout();
       await expect(api.getMe()).rejects.toMatchObject({

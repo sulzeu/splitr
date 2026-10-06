@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { useState } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { api, ApiError } from "@/api/client";
 import { BillProvider, useBill } from "./BillContext";
@@ -11,6 +12,7 @@ vi.mock("@/api/client", () => ({
     getSplitByJoinCode: vi.fn(),
     createBill: vi.fn(),
     addPerson: vi.fn(),
+    importReceipt: vi.fn(),
   },
   ApiError: class ApiError extends Error {
     constructor(
@@ -46,6 +48,7 @@ const split: SplitResult = {
 
 function ContextProbe() {
   const context = useBill();
+  const [receiptImportStatus, setReceiptImportStatus] = useState("not attempted");
   return (
     <div>
       <output data-testid="bill">{context.bill?.title ?? "no bill"}</output>
@@ -53,8 +56,19 @@ function ContextProbe() {
       <output data-testid="loading">{String(context.loading)}</output>
       <output data-testid="error">{context.error ?? "no error"}</output>
       <output data-testid="read-only">{String(context.readOnly)}</output>
+      <output data-testid="receipt-import-status">{receiptImportStatus}</output>
       <button onClick={() => void context.createBill("New dinner")}>Create</button>
       <button onClick={() => void context.addPerson("Ada")}>Add person</button>
+      <button
+        onClick={() =>
+          void context.importReceipt("image-data", "image/jpeg").then(
+            () => setReceiptImportStatus("succeeded"),
+            () => setReceiptImportStatus("failed")
+          )
+        }
+      >
+        Import receipt
+      </button>
       <button onClick={() => context.clearError()}>Clear error</button>
     </div>
   );
@@ -137,6 +151,25 @@ describe("BillProvider", () => {
       expect(screen.getByTestId("error")).toHaveTextContent("Something went wrong. Try again.")
     );
     expect(screen.getByTestId("error")).not.toHaveTextContent("database internals");
+  });
+
+  it("propagates receipt import failures so the caller can offer a retry", async () => {
+    vi.mocked(api.getBill).mockResolvedValue(bill);
+    vi.mocked(api.getSplit).mockResolvedValue(split);
+    vi.mocked(api.importReceipt).mockRejectedValue(
+      new ApiError(500, "Model returned invalid JSON")
+    );
+    storage.set("splitreceipt.activeBillId", bill.id);
+    renderProvider();
+    await screen.findByText("Dinner");
+
+    fireEvent.click(screen.getByRole("button", { name: "Import receipt" }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("receipt-import-status")).toHaveTextContent("failed");
+      expect(screen.getByTestId("error")).toHaveTextContent("Model returned invalid JSON");
+      expect(screen.getByTestId("loading")).toHaveTextContent("false");
+    });
   });
 
   it("marks bills opened from another owner as read-only", async () => {

@@ -22,7 +22,11 @@ type BillContextValue = {
   removePerson: (personId: string) => Promise<void>;
   setPersonSettled: (personId: string, settled: boolean) => Promise<void>;
   addItem: (item: { name: string; price: number; quantity?: number }) => Promise<void>;
-  importReceipt: (imageBase64: string, mimeType?: string) => Promise<void>;
+  importReceipt: (
+    imageBase64: string,
+    mimeType?: string,
+    reference?: { imageBase64: string; mimeType?: string }
+  ) => Promise<void>;
   updateItem: (
     itemId: string,
     patch: { name?: string; price?: number; quantity?: number }
@@ -80,7 +84,7 @@ export function BillProvider({ children, ownerId }: { children: ReactNode; owner
     }
   }, []);
 
-  const handle = useCallback(async (fn: () => Promise<Bill>) => {
+  const handle = useCallback(async (fn: () => Promise<Bill>, rethrow = false) => {
     setLoading(true);
     setError(null);
     try {
@@ -90,6 +94,7 @@ export function BillProvider({ children, ownerId }: { children: ReactNode; owner
       setSplit(newSplit);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Something went wrong. Try again.");
+      if (rethrow) throw e;
     } finally {
       setLoading(false);
     }
@@ -159,8 +164,11 @@ export function BillProvider({ children, ownerId }: { children: ReactNode; owner
     setPersonSettled: (personId, settled) =>
       handle(() => api.setPersonSettled(bill!.id, personId, settled)),
     addItem: (item) => handle(() => api.addItem(bill!.id, item)),
-    importReceipt: (imageBase64, mimeType) =>
-      handle(async () => (await api.importReceipt(bill!.id, imageBase64, mimeType)).bill),
+    importReceipt: (imageBase64, mimeType, reference) =>
+      handle(
+        async () => (await api.importReceipt(bill!.id, imageBase64, mimeType, reference)).bill,
+        true
+      ),
     updateItem: (itemId, patch) => handle(() => api.updateItem(bill!.id, itemId, patch)),
     removeItem: (itemId) => handle(() => api.removeItem(bill!.id, itemId)),
     toggleAssignment: (itemId, personId) =>

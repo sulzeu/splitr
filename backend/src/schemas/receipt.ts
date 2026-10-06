@@ -1,9 +1,24 @@
 import { z } from "zod";
 
-export const requestedReceiptSchema = z.object({
-  imageBase64: z.string().min(1).max(15_000_000),
-  mimeType: z.enum(["image/jpeg", "image/png", "image/webp"]).optional(),
-});
+export const requestedReceiptSchema = z
+  .object({
+    imageBase64: z.string().min(1).max(15_000_000),
+    mimeType: z.enum(["image/jpeg", "image/png", "image/webp"]).optional(),
+    referenceImageBase64: z.string().min(1).max(15_000_000).optional(),
+    referenceMimeType: z.enum(["image/jpeg", "image/png", "image/webp"]).optional(),
+  })
+  .superRefine((receipt, context) => {
+    if (
+      receipt.referenceImageBase64 &&
+      receipt.imageBase64.length + receipt.referenceImageBase64.length > 15_000_000
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "Receipt images exceed the combined upload limit",
+        path: ["referenceImageBase64"],
+      });
+    }
+  });
 
 export type RequestReceipt = z.infer<typeof requestedReceiptSchema>;
 

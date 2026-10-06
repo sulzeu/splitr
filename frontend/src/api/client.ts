@@ -76,14 +76,31 @@ export const api = {
     >
   ) => request<Bill>(`/api/bills/${billId}`, patch(settings)),
   getSplit: (billId: string) => request<SplitResult>(`/api/bills/${billId}/split`),
-  importReceipt: (billId: string, imageBase64: string, mimeType?: string) =>
+  importReceipt: (
+    billId: string,
+    imageBase64: string,
+    mimeType?: string,
+    reference?: { imageBase64: string; mimeType?: string }
+  ) =>
     request<{
       bill: Bill;
       extraction: {
         items: Array<{ name: string; price: number; quantity: number }>;
         total: number;
       };
-    }>(`/api/bills/${billId}/receipt`, json({ imageBase64, mimeType })),
+    }>(
+      `/api/bills/${billId}/receipt`,
+      json({
+        imageBase64,
+        mimeType,
+        ...(reference
+          ? {
+              referenceImageBase64: reference.imageBase64,
+              referenceMimeType: reference.mimeType,
+            }
+          : {}),
+      })
+    ),
 
   addPerson: (billId: string, name: string) =>
     request<Bill>(`/api/bills/${billId}/people`, json({ name })),

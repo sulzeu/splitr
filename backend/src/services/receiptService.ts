@@ -66,7 +66,9 @@ export function receiptProcessErrorMessage(
 
 export async function extractReceipt(
   imageBase64: string,
-  mimeType?: string
+  mimeType?: string,
+  referenceImageBase64?: string,
+  referenceMimeType?: string
 ): Promise<ExtractedReceipt> {
   const scriptPath =
     process.env.SPLITRECEIPT_INFERENCE_SCRIPT ??
@@ -91,7 +93,13 @@ export async function extractReceipt(
           resolve(output);
         }
       );
-      child.stdin?.end(JSON.stringify({ imageBase64, mimeType }));
+      child.stdin?.end(
+        JSON.stringify({
+          imageBase64,
+          mimeType,
+          ...(referenceImageBase64 ? { referenceImageBase64, referenceMimeType } : {}),
+        })
+      );
     });
     return extractedReceiptSchema.parse(JSON.parse(stdout));
   } catch (error) {

@@ -1,12 +1,6 @@
 import { Bill } from "../schemas/bills";
 import { BillRepository } from "./billRepository";
 
-/**
- * MVP data store: plain in-memory Maps. Not persistent — restarting the
- * server loses all bills. That's fine for now (see repository interface
- * doc comment); this exists purely so the API surface and business logic
- * can be built and tested end-to-end before committing to a database.
- */
 export class InMemoryBillRepository implements BillRepository {
   private billsById = new Map<string, Bill>();
   private billIdByJoinCode = new Map<string, string>();

@@ -19,7 +19,7 @@ export class BillService {
     return bill;
   }
 
-  async createBill(ownerId: string, title?: string): Promise<Bill> {
+  async createBill(ownerId: string, title: string | undefined, ownerName: string): Promise<Bill> {
     let joinCode = "";
     for (let attempt = 0; attempt < MAX_JOIN_CODE_ATTEMPTS; attempt++) {
       const candidate = generateJoinCode();
@@ -36,7 +36,7 @@ export class BillService {
       joinCode,
       createdAt: Date.now(),
       title: title?.trim() || "New split",
-      people: [],
+      people: [{ id: ownerId, name: ownerName }],
       items: [],
       gstMode: "inclusive",
       gstRate: AU_GST_RATE,

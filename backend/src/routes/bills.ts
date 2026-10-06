@@ -34,7 +34,9 @@ export function createBillsRouter(
     auth,
     asyncHandler(async (req, res) => {
       const body = createBillSchema.parse(req.body ?? {});
-      const bill = await billService.createBill(accountId(req), body.title);
+      const ownerId = accountId(req);
+      const account = await accountService.getAccount(ownerId);
+      const bill = await billService.createBill(ownerId, body.title, account.displayName);
       res.status(201).json(bill);
     })
   );
@@ -52,8 +54,11 @@ export function createBillsRouter(
     auth,
     json({ limit: "16mb" }),
     asyncHandler(async (req, res) => {
-      const { imageBase64, mimeType } = requestedReceiptSchema.parse(req.body);
-      const extraction = await extractReceipt(imageBase64, mimeType);
+      const { imageBase64, mimeType, referenceImageBase64, referenceMimeType } =
+        requestedReceiptSchema.parse(req.body);
+      const extraction = referenceImageBase64
+        ? await extractReceipt(imageBase64, mimeType, referenceImageBase64, referenceMimeType)
+        : await extractReceipt(imageBase64, mimeType);
       const bill = await billService.importReceipt(req.params.billId, accountId(req), extraction);
       res.json({ bill, extraction });
     })

@@ -10,7 +10,7 @@ async function makeApp() {
     password: "password123",
     displayName: "Owner",
   });
-  return { app, token: auth.body.token };
+  return { app, token: auth.body.token, account: auth.body.account };
 }
 
 function api(
@@ -60,13 +60,13 @@ describe("bills API", () => {
     expect(after.body.paid[0].id).toBe(created.body.id);
   });
 
-  it("creates a bill with a unique 6-char join code", async () => {
-    const { app, token } = await makeApp();
+  it("creates a bill with the creator as its first member and a unique join code", async () => {
+    const { app, token, account } = await makeApp();
     const res = await api(app, token, "post", "/api/bills").send({ title: "Friday dinner" });
     expect(res.status).toBe(201);
     expect(res.body.title).toBe("Friday dinner");
     expect(res.body.joinCode).toMatch(/^[A-Z0-9]{6}$/);
-    expect(res.body.people).toEqual([]);
+    expect(res.body.people).toEqual([{ id: account.id, name: account.displayName }]);
     expect(res.body.items).toEqual([]);
   });
 

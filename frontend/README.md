@@ -45,6 +45,8 @@ src/
   types.ts                same domain types as the backend (copied, not
                            yet shared as a package — see note below)
   screens/                Home -> People -> Items -> Assign -> Summary
-  components/             Button, Perforation, JoinCodeBanner, ErrorBanner
+  components/             Button, Perforation, JoinCodeBanner, ErrorBanner,
+                          ReceiptCropDialog
+  utils/receiptCrop.ts    lazy browser-side receipt detection and correction
   index.css               design tokens as CSS custom properties
 ```

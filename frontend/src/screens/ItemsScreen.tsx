@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { Button } from "@/components/Button";
 import { Perforation } from "@/components/Perforation";
+import { ReceiptCropDialog } from "@/components/ReceiptCropDialog";
 import { useBill } from "@/context/BillContext";
 
 export function ItemsScreen({ onNext }: { onNext: () => void }) {
@@ -9,6 +10,10 @@ export function ItemsScreen({ onNext }: { onNext: () => void }) {
   const [price, setPrice] = useState("");
   const [scanNotice, setScanNotice] = useState<string | null>(null);
   const [scanBusy, setScanBusy] = useState(false);
+  const [pendingImage, setPendingImage] = useState<{
+    src: string;
+    mimeType: string;
+  } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!bill) return null;
@@ -24,16 +29,30 @@ export function ItemsScreen({ onNext }: { onNext: () => void }) {
 
   const handleScan = async (file: File | undefined) => {
     if (!file) return;
-    setScanBusy(true);
     setScanNotice(null);
     try {
-      const imageBase64 = await new Promise<string>((resolve, reject) => {
+      const src = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
-        reader.onload = () => resolve(String(reader.result).split(",")[1] ?? "");
+        reader.onload = () => resolve(String(reader.result));
         reader.onerror = () => reject(new Error("Could not read receipt image"));
         reader.readAsDataURL(file);
       });
-      await importReceipt(imageBase64, file.type);
+      setPendingImage({ src, mimeType: file.type || "image/jpeg" });
+    } catch (error) {
+      setScanNotice(error instanceof Error ? error.message : "Could not read receipt image.");
+    }
+  };
+
+  const handleImport = async (
+    imageBase64: string,
+    mimeType: string,
+    reference?: { imageBase64: string; mimeType: string }
+  ) => {
+    setScanBusy(true);
+    setScanNotice(null);
+    try {
+      await importReceipt(imageBase64, mimeType, reference);
+      setPendingImage(null);
     } catch (error) {
       setScanNotice(error instanceof Error ? error.message : "Receipt scan failed.");
     } finally {
@@ -51,7 +70,10 @@ export function ItemsScreen({ onNext }: { onNext: () => void }) {
       </p>
 
       <button
-        onClick={() => fileInputRef.current?.click()}
+        onClick={() => {
+          if (fileInputRef.current) fileInputRef.current.value = "";
+          fileInputRef.current?.click();
+        }}
         disabled={scanBusy}
         style={{
           width: "100%",
@@ -73,10 +95,26 @@ export function ItemsScreen({ onNext }: { onNext: () => void }) {
         onChange={(event) => void handleScan(event.target.files?.[0])}
         style={{ display: "none" }}
       />
-      {scanNotice && (
+      {scanNotice && !pendingImage && (
         <p className="body-faint" style={{ color: "var(--outstanding)", marginTop: 4 }}>
           {scanNotice}
         </p>
+      )}
+      {pendingImage && (
+        <ReceiptCropDialog
+          imageSrc={pendingImage.src}
+          mimeType={pendingImage.mimeType}
+          isProcessing={scanBusy}
+          error={scanNotice}
+          onCancel={() => setPendingImage(null)}
+          onConfirm={(imageBase64, mimeType, referenceImageBase64, referenceMimeType) =>
+            void handleImport(imageBase64, mimeType, {
+              imageBase64: referenceImageBase64,
+              mimeType: referenceMimeType,
+            })
+          }
+          onUseOriginal={(imageBase64, mimeType) => void handleImport(imageBase64, mimeType)}
+        />
       )}
 
       <Perforation />
