@@ -10,7 +10,7 @@ SplitReceipt helps a group turn a receipt into a transparent split. Add people a
 
 ## Highlights
 
-- **Fair, penny-exact calculations:** distributes item costs and shared charges using a largest-remainder approach so allocated amounts reconcile to the bill total.
+- **Cent-exact calculations:** distributes item costs and shared charges using a largest-remainder approach so allocated amounts reconcile to the bill total.
 - **Flexible item assignment:** supports individual and shared items rather than assuming every person owes the same amount.
 - **Full bill lifecycle:** create or join bills, add people and items, assign items, review the split, track settlement, and revisit bill history.
 - **Receipt extraction:** integrates a locally run vision-language model to extract line items from receipt photos, with manual entry available.
@@ -62,6 +62,7 @@ The frontend calls the backend through a typed API client. Backend routes valida
 The repository includes:
 
 - backend integration tests for authentication, bill access, item assignment, and penny-exact split behavior
+- a frontend API integration test that calls the Express backend over HTTP through the production API client
 - frontend screen tests for authentication, bill creation/join/history, assignment, and summary/payment actions
 - CI checks for ESLint, Prettier, coverage thresholds, and frontend/backend production builds
 

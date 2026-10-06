@@ -34,14 +34,6 @@ Typical values include:
 
 Use `SUPABASE_SERVICE_ROLE_KEY` only on the backend. It must never be exposed to the browser or client app.
 
-## Security guidance
-
-Public-facing documentation should describe the app flow, not the full internal server surface. Keep these points in mind:
-
-- only client-facing auth and bill flows should be documented outside the team
-- keep service-role credentials, deployment config, and admin-only endpoints private
-- restrict CORS and rotate any leaked server credentials before production use
-
 ## Typical app flows
 
 The server supports the normal bill lifecycle:
@@ -53,5 +45,3 @@ The server supports the normal bill lifecycle:
 - item assignment and split calculation
 - paid/unpaid history tracking
 - optional local receipt extraction
-
-These flows are intentionally described at a higher level in public docs; the full internal route inventory and server-side config remain developer-only context.

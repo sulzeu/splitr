@@ -6,7 +6,6 @@ import tempfile
 from pathlib import Path
 from typing import Any, cast
 
-
 SYSTEM_PROMPT = (
     "Extract every line item from this receipt. Respond with ONLY a JSON "
     "object in exactly this schema, no other text:\n"
@@ -74,5 +73,5 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as error:
-        print(json.dumps({"error": str(error)}))
+        print(f"SPLITRECEIPT_ERROR: {json.dumps({'error': str(error)})}", file=sys.stderr)
         sys.exit(1)

@@ -33,7 +33,15 @@ export function createApp(
       credentials: true,
     })
   );
-  app.use(express.json());
+  app.use(
+    express.json({
+      limit: "100kb",
+      type: (req) =>
+        !(
+          req.method === "POST" && /^\/api\/bills\/[^/]+\/receipt(?:\?.*)?\/?$/.test(req.url ?? "")
+        ),
+    })
+  );
 
   app.get("/health", (_req, res) => res.json({ ok: true }));
   app.use("/api/auth", createAuthRouter(accountService, billService));

@@ -1,4 +1,4 @@
-import { Request, Router } from "express";
+import { json, Request, Router } from "express";
 import { BillService } from "../services/billService";
 import { asyncHandler } from "../middleware/asyncHandler";
 import { AuthenticatedRequest, requireAuth } from "../middleware/auth";
@@ -50,6 +50,7 @@ export function createBillsRouter(
   router.post(
     "/:billId/receipt",
     auth,
+    json({ limit: "16mb" }),
     asyncHandler(async (req, res) => {
       const { imageBase64, mimeType } = requestedReceiptSchema.parse(req.body);
       const extraction = await extractReceipt(imageBase64, mimeType);

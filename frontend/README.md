@@ -10,10 +10,10 @@ device can be joined and edited from another.
 You need the [backend](../splitreceipt-backend) running first.
 
 ```bash
-# in splitreceipt-backend/
+# in splitr/backend/
 npm install && npm run dev     # http://localhost:3001
 
-# in splitreceipt-web/
+# in splitr/frontend/
 npm install && npm run dev     # http://localhost:5173
 ```
 
@@ -35,22 +35,6 @@ add the frontend origin, such as `http://localhost:5173`, to the allowed
 redirect URLs. The backend must also have Supabase configured to verify the
 OAuth access token.
 
-## What changed from the original local-state prototype
-
-- `src/logic/splitCalculator.ts` is **gone from this project** — the
-  backend is now the single source of truth for the split math. The
-  frontend just calls `GET /bills/:id/split` and renders the result.
-- `src/context/BillContext.tsx` now wraps the API client
-  (`src/api/client.ts`) instead of local `useState` mutations. Every
-  mutating call still returns the full updated bill, which the context
-  uses to replace its local copy wholesale.
-- The current bill's id is kept in `localStorage`, so refreshing the page
-  restores your place instead of losing everything.
-- Added a **join-by-code** flow on the home screen (`HomeScreen.tsx`) — the
-  actual point of moving to a backend. `JoinCodeBanner` shows the current
-  bill's code on every subsequent screen so the organizer can read it out
-  or copy it for the table.
-
 ## Structure
 
 ```
@@ -64,23 +48,3 @@ src/
   components/             Button, Perforation, JoinCodeBanner, ErrorBanner
   index.css               design tokens as CSS custom properties
 ```
-
-## Known rough edges worth knowing about
-
-- **`types.ts` is duplicated** across the backend and this project (and the
-  React Native app). They're identical today because I copied them by
-  hand. The honest long-term fix is a small shared npm package (or a
-  monorepo with a workspace) that all three import from, so they can't
-  silently drift apart. Not worth the tooling overhead yet with one
-  frontend built against the backend — worth doing before the RN app also
-  gets wired up, so you're not keeping three copies in sync by hand.
-- **No real-time updates.** If two people have the same bill open at once,
-  neither sees the other's changes until they trigger a request themselves
-  (adding an item, toggling GST, etc. all refresh local state, but nothing
-  pushes updates to an idle tab). Fine for "one organizer drives, others
-  just view the join code and their own total," not fine yet for true
-  simultaneous multi-editor use — that needs the WebSocket work flagged in
-  the backend README.
-- **Mobile browser Web Share support varies.** `navigator.share` works on
-  iOS Safari and Android Chrome; desktop browsers fall back to copying the
-  summary to the clipboard instead.
