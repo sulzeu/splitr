@@ -120,9 +120,6 @@ export function HomeScreen({ onEnterBill }: { onEnterBill: () => void }) {
         </>
       )}
 
-      <p className="body-faint" style={{ marginTop: 24 }}>
-        Receipt scanning isn't wired up in this build yet — you'll add items manually for now.
-      </p>
     </div>
   );
 }

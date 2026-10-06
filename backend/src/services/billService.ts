@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { Bill, BillItem, GstMode } from "../schemas/bills";
+import { Bill, BillItem } from "../schemas/bills";
 import { calculateSplit } from "../domain/splitCalculator";
 import { BillRepository } from "../repository/billRepository";
 import { generateJoinCode } from "../utils/joinCode";
@@ -225,5 +225,3 @@ export class BillService {
     return calculateSplit(bill);
   }
 }
-
-export const GST_MODES: GstMode[] = ["inclusive", "exclusive", "none"];

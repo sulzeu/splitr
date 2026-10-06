@@ -1,4 +1,4 @@
-import { Account, Bill, BillItem, GstMode, SplitResult } from "@/types";
+import { Account, Bill, BillItem, SplitResult } from "@/types";
 
 // Configure via a .env file: VITE_API_BASE_URL=http://192.168.1.23:3001
 // Defaults to localhost, which only works when the browser and backend are
@@ -122,7 +122,6 @@ export const api = {
     request<Bill>(`/api/bills/${billId}/items/${itemId}/assignments`, json({ personId })),
 };
 
-export type { GstMode };
 export { ApiError };
 export const authToken = {
   get: () => localStorage.getItem(TOKEN_KEY),
