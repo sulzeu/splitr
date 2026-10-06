@@ -27,7 +27,7 @@ export const extractedReceiptSchema = z.object({
     z.object({
       name: z.string().trim().min(1),
       price: z.number().finite().min(0),
-      quantity: z.number().int().min(1).default(1),
+      quantity: z.number().int().min(1).max(1000).default(1),
     })
   ),
   total: z.number().finite().min(0),

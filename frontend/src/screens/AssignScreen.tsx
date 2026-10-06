@@ -20,8 +20,9 @@ export function AssignScreen({ onNext }: { onNext: () => void }) {
           <div className="row">
             <span className="body-text" style={{ flex: 1 }}>
               {item.name}
+              {item.quantity > 1 ? ` × ${item.quantity}` : ""}
             </span>
-            <span className="amount">${item.price.toFixed(2)}</span>
+            <span className="amount">${(item.price * item.quantity).toFixed(2)}</span>
           </div>
           <div className="chip-row">
             {bill.people.map((person) => {

@@ -60,13 +60,13 @@ export function ItemsScreen({ onNext }: { onNext: () => void }) {
     }
   };
 
-  const itemsTotal = bill.items.reduce((sum, i) => sum + i.price, 0);
+  const itemsTotal = bill.items.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
   return (
     <div>
       <h1 className="h1">What was ordered?</h1>
       <p className="body-faint" style={{ margin: "4px 0 16px" }}>
-        Add each line from the receipt. Prices as printed — GST handling is set below.
+        Add each item at its per-unit price. Receipt quantities are split into separate items.
       </p>
 
       <button
@@ -152,8 +152,9 @@ export function ItemsScreen({ onNext }: { onNext: () => void }) {
             <div key={item.id} className="row" style={{ padding: "8px 0" }}>
               <span className="body-text" style={{ flex: 1 }}>
                 {item.name}
+                {item.quantity > 1 ? ` × ${item.quantity}` : ""}
               </span>
-              <span className="amount">${item.price.toFixed(2)}</span>
+              <span className="amount">${(item.price * item.quantity).toFixed(2)}</span>
               <button
                 className="btn-danger-text"
                 style={{ marginLeft: 8 }}

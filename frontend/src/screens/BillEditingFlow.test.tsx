@@ -36,12 +36,13 @@ function calculateSplit(bill: Bill): SplitResult {
 
   for (const item of bill.items) {
     if (item.assignedTo.length === 0) {
-      unassignedSubtotal += item.price;
+      unassignedSubtotal += item.price * item.quantity;
       continue;
     }
 
-    const cents = Math.round((item.price * 100) / item.assignedTo.length);
-    let remainder = Math.round(item.price * 100) - cents * item.assignedTo.length;
+    const itemCents = Math.round(item.price * item.quantity * 100);
+    const cents = Math.round(itemCents / item.assignedTo.length);
+    let remainder = itemCents - cents * item.assignedTo.length;
     item.assignedTo.forEach((personId) => {
       const share = cents + (remainder-- > 0 ? 1 : 0);
       subtotals.set(personId, (subtotals.get(personId) ?? 0) + share / 100);
@@ -141,6 +142,7 @@ describe("bill editing flow", () => {
             id: `item-${nextItemId++}`,
             name: item.name,
             price: item.price,
+            quantity: 1,
             assignedTo: [],
           },
         ],

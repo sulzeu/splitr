@@ -29,7 +29,7 @@ describe("calculateSplit", () => {
     const bill = makeBill({
       gstMode: "inclusive",
       gstRate: 0.1,
-      items: [{ id: "item-1", name: "Dessert", price: 10, assignedTo: ["alice"] }],
+      items: [{ id: "item-1", name: "Dessert", price: 10, quantity: 1, assignedTo: ["alice"] }],
     });
 
     const result = calculateSplit(bill);
@@ -46,8 +46,8 @@ describe("calculateSplit", () => {
       gstMode: "exclusive",
       gstRate: 0.1,
       items: [
-        { id: "item-1", name: "Steak", price: 10, assignedTo: ["alice"] },
-        { id: "item-2", name: "Wine", price: 20, assignedTo: ["bob"] },
+        { id: "item-1", name: "Steak", price: 10, quantity: 1, assignedTo: ["alice"] },
+        { id: "item-2", name: "Wine", price: 20, quantity: 1, assignedTo: ["bob"] },
       ],
     });
 
@@ -63,8 +63,8 @@ describe("calculateSplit", () => {
   it("tracks unassigned subtotal separately from assigned totals", () => {
     const bill = makeBill({
       items: [
-        { id: "item-1", name: "Assigned", price: 10, assignedTo: ["alice"] },
-        { id: "item-2", name: "Unassigned", price: 5, assignedTo: [] },
+        { id: "item-1", name: "Assigned", price: 10, quantity: 1, assignedTo: ["alice"] },
+        { id: "item-2", name: "Unassigned", price: 5, quantity: 1, assignedTo: [] },
       ],
     });
 
@@ -73,5 +73,16 @@ describe("calculateSplit", () => {
     expect(result.unassignedSubtotal).toBeCloseTo(5, 2);
     expect(result.personTotals[0].total).toBeCloseTo(10, 2);
     expect(result.personTotals[1].total).toBeCloseTo(0, 2);
+  });
+
+  it("multiplies grouped item unit prices by quantity", () => {
+    const bill = makeBill({
+      items: [{ id: "item-1", name: "Soda", price: 4, quantity: 3, assignedTo: ["alice"] }],
+    });
+
+    const result = calculateSplit(bill);
+
+    expect(result.personTotals[0].itemsSubtotal).toBe(12);
+    expect(result.grandTotal).toBe(12);
   });
 });

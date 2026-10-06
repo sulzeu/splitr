@@ -121,10 +121,10 @@ export function BillProvider({ children, ownerId }: { children: ReactNode; owner
     setLoading(true);
     setError(null);
     try {
-      const b = await api.getBillByJoinCode(joinCode.trim());
+      const { bill: b, split: joinedSplit } = await api.joinBillByCode(joinCode.trim());
       localStorage.setItem(STORAGE_KEY, b.id);
       setBill(b);
-      setSplit(await api.getSplitByJoinCode(joinCode.trim()));
+      setSplit(joinedSplit);
       return true;
     } catch (e) {
       setError(

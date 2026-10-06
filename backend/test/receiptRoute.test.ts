@@ -71,6 +71,30 @@ describe("receipt upload body size", () => {
     );
   });
 
+  it("expands receipt quantities into separately assignable items at the per-unit price", async () => {
+    const { app, token, billId } = await setup();
+    vi.mocked(extractReceipt).mockResolvedValue({
+      items: [{ name: "Tea", price: 3.33, quantity: 3 }],
+      total: 9.99,
+    });
+
+    const response = await request(app)
+      .post(`/api/bills/${billId}/receipt`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ imageBase64: "Y3JvcA==" });
+
+    expect(response.status).toBe(200);
+    expect(response.body.bill.items).toHaveLength(3);
+    expect(response.body.bill.items.map((item: { quantity: number }) => item.quantity)).toEqual([
+      1, 1, 1,
+    ]);
+    expect(response.body.bill.items.map((item: { price: number }) => item.price)).toEqual([
+      3.33, 3.33, 3.33,
+    ]);
+    expect(response.body.bill.items.reduce((sum: number, item: { price: number }) => sum + item.price, 0))
+      .toBe(9.99);
+  });
+
   it("rejects a pair of images over the combined limit", async () => {
     const { app, token, billId } = await setup();
 

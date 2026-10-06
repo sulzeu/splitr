@@ -75,10 +75,14 @@ describe("bills API", () => {
     const created = await api(app, token, "post", "/api/bills").send({});
     const byId = await api(app, token, "get", `/api/bills/${created.body.id}`);
     const byCode = await api(app, token, "get", `/api/bills/by-code/${created.body.joinCode}`);
+    const joined = await request(app).get(`/api/bills/by-code/${created.body.joinCode}/join`);
     const splitByCode = await request(app).get(`/api/bills/by-code/${created.body.joinCode}/split`);
     expect(byId.status).toBe(200);
     expect(byCode.status).toBe(200);
     expect(splitByCode.status).toBe(200);
+    expect(joined.status).toBe(200);
+    expect(joined.body.bill.id).toBe(created.body.id);
+    expect(joined.body.split.grandTotal).toBe(0);
     expect(byId.body.id).toBe(created.body.id);
     expect(byCode.body.id).toBe(created.body.id);
   });
@@ -104,6 +108,27 @@ describe("bills API", () => {
       price: -5,
     });
     expect(res.status).toBe(400);
+  });
+
+  it("expands manually added quantities into individually assignable items", async () => {
+    const { app, token } = await makeApp();
+    const created = await api(app, token, "post", "/api/bills").send({});
+
+    const added = await api(app, token, "post", `/api/bills/${created.body.id}/items`).send({
+      name: "Soda",
+      price: 2.5,
+      quantity: 3,
+    });
+
+    expect(added.status).toBe(201);
+    expect(added.body.items).toHaveLength(3);
+    expect(added.body.items.map((item: { quantity: number }) => item.quantity)).toEqual([
+      1, 1, 1,
+    ]);
+    expect(added.body.items.map((item: { price: number }) => item.price)).toEqual([
+      2.5, 2.5, 2.5,
+    ]);
+    expect(new Set(added.body.items.map((item: { id: string }) => item.id)).size).toBe(3);
   });
 
   it("full flow: people, items, assignment, and a penny-exact split", async () => {

@@ -67,6 +67,8 @@ export const api = {
     request<Bill>("/api/bills", { ...json({ title }), method: "POST" }),
   getBill: (billId: string) => request<Bill>(`/api/bills/${billId}`),
   getBillByJoinCode: (joinCode: string) => request<Bill>(`/api/bills/by-code/${joinCode}`),
+  joinBillByCode: (joinCode: string) =>
+    request<{ bill: Bill; split: SplitResult }>(`/api/bills/by-code/${joinCode}/join`),
   getSplitByJoinCode: (joinCode: string) =>
     request<SplitResult>(`/api/bills/by-code/${joinCode}/split`),
   updateSettings: (
@@ -114,7 +116,7 @@ export const api = {
   updateItem: (
     billId: string,
     itemId: string,
-    patchBody: Partial<Pick<BillItem, "name" | "price">>
+    patchBody: Partial<Pick<BillItem, "name" | "price" | "quantity">>
   ) => request<Bill>(`/api/bills/${billId}/items/${itemId}`, patch(patchBody)),
   removeItem: (billId: string, itemId: string) =>
     request<Bill>(`/api/bills/${billId}/items/${itemId}`, { method: "DELETE" }),

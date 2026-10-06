@@ -11,7 +11,7 @@ SplitReceipt helps a group turn a receipt into a transparent split. Add people a
 ## Highlights
 
 - **Cent-exact calculations:** distributes item costs and shared charges using a largest-remainder approach so allocated amounts reconcile to the bill total.
-- **Flexible item assignment:** supports individual and shared items rather than assuming every person owes the same amount.
+- **Flexible item assignment:** supports individual and shared items rather than assuming every person owes the same amount. Prices are per unit, and receipt quantities become separate assignable items.
 - **Full bill lifecycle:** create or join bills, add people and items, assign items, review the split, track settlement, and revisit bill history.
 - **Receipt extraction:** integrates a locally run vision-language model to extract line items from receipt photos, with manual entry available.
 - **Backend-owned state and calculations:** Express services and repositories keep persistence and business rules out of the UI.

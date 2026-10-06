@@ -44,7 +44,7 @@ export function calculateSplit(bill: Bill): SplitResult {
 
   // Calculate each person's subtotal from the items
   for (const item of bill.items) {
-    const itemCents = toCents(item.price);
+    const itemCents = toCents(item.price) * item.quantity;
     if (item.assignedTo.length === 0) {
       unassignedCents += itemCents;
       continue;

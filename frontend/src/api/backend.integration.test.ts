@@ -88,6 +88,8 @@ describe("frontend API client with the backend", () => {
       const byId = await api.getBill(bill.id);
       expect(byId.items.find((item) => item.id === drinkId)?.assignedTo).toEqual([adaId, benId]);
       expect(await api.getBillByJoinCode(bill.joinCode)).toMatchObject({ id: bill.id });
+      const joined = await api.joinBillByCode(bill.joinCode);
+      expect(joined).toMatchObject({ bill: { id: bill.id }, split: { grandTotal: 33 } });
 
       const split = await api.getSplit(bill.id);
       expect(split).toEqual({
@@ -109,6 +111,7 @@ describe("frontend API client with the backend", () => {
         unassignedSubtotal: 0,
         grandTotal: 33,
       });
+      expect(joined.split).toEqual(split);
       expect(await api.getSplitByJoinCode(bill.joinCode)).toEqual(split);
 
       const settledBill = await api.setPersonSettled(bill.id, adaId, true);

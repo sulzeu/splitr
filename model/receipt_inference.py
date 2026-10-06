@@ -13,8 +13,10 @@ SYSTEM_PROMPT = (
     "one complete, valid JSON object, with no markdown or explanation. Use this "
     "structure (the example values are not receipt data):\n"
     '{"items":[{"name":"item name","price":12.34,"quantity":1}],"total":12.34}\n'
-    "Prices, quantities, and total must be JSON numbers, not strings. Do not "
-    "include currency symbols. Use an empty items array if no items are legible."
+    "For each item, price is the amount for one unit, and quantity is the "
+    "number of units on that line. Prices, quantities, and "
+    "total must be JSON numbers, not strings. Do not include currency symbols. "
+    "Use an empty items array if no items are legible."
 )
 MODEL_ID = "mlx-community/Qwen2-VL-2B-Instruct-4bit"
 

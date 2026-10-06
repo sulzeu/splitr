@@ -42,6 +42,13 @@ export function createBillsRouter(
   );
 
   router.get(
+    "/by-code/:joinCode/join",
+    asyncHandler(async (req, res) => {
+      res.json(await billService.getBillAndSplitByJoinCode(req.params.joinCode));
+    })
+  );
+
+  router.get(
     "/by-code/:joinCode",
     asyncHandler(async (req, res) => {
       const bill = await billService.getBillByJoinCode(req.params.joinCode);

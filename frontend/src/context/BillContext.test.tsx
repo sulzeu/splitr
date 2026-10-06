@@ -8,6 +8,8 @@ import type { Bill, SplitResult } from "@/types";
 vi.mock("@/api/client", () => ({
   api: {
     getBill: vi.fn(),
+    joinBillByCode: vi.fn(),
+    getBillByJoinCode: vi.fn(),
     getSplit: vi.fn(),
     getSplitByJoinCode: vi.fn(),
     createBill: vi.fn(),
@@ -58,6 +60,7 @@ function ContextProbe() {
       <output data-testid="read-only">{String(context.readOnly)}</output>
       <output data-testid="receipt-import-status">{receiptImportStatus}</output>
       <button onClick={() => void context.createBill("New dinner")}>Create</button>
+      <button onClick={() => void context.joinBill("ABCD12")}>Join</button>
       <button onClick={() => void context.addPerson("Ada")}>Add person</button>
       <button
         onClick={() =>
@@ -120,6 +123,21 @@ describe("BillProvider", () => {
       expect(screen.getByTestId("loading")).toHaveTextContent("false");
     });
     expect(screen.getByTestId("bill")).toHaveTextContent("no bill");
+  });
+
+  it("loads a joined bill and split from one API response", async () => {
+    vi.mocked(api.joinBillByCode).mockResolvedValue({ bill, split });
+
+    renderProvider();
+    fireEvent.click(screen.getByRole("button", { name: "Join" }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("bill")).toHaveTextContent("Dinner");
+      expect(screen.getByTestId("split")).toHaveTextContent("split loaded");
+    });
+    expect(api.joinBillByCode).toHaveBeenCalledWith("ABCD12");
+    expect(api.getBillByJoinCode).not.toHaveBeenCalled();
+    expect(api.getSplitByJoinCode).not.toHaveBeenCalled();
   });
 
   it("surfaces create failures and allows the error to be cleared", async () => {

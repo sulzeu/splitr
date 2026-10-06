@@ -9,6 +9,7 @@ export const billItemSchema = z.object({
   id: z.string(),
   name: z.string().trim().min(1).max(200),
   price: z.number().min(0),
+  quantity: z.number().int().min(1).max(1000).default(1),
   assignedTo: z.array(z.string()),
 });
 export type BillItem = z.infer<typeof billItemSchema>;
@@ -70,6 +71,7 @@ export const setSettledSchema = z.object({ settled: z.boolean() });
 export const addItemSchema = z.object({
   name: z.string().trim().min(1).max(200),
   price: z.number().min(0),
+  quantity: z.number().int().min(1).max(1000).optional(),
 });
 export type AddItemInput = z.infer<typeof addItemSchema>;
 
@@ -77,7 +79,7 @@ export const updateItemSchema = z
   .object({
     name: z.string().trim().min(1).max(200).optional(),
     price: z.number().min(0).optional(),
-    quantity: z.number().int().min(1).optional(),
+    quantity: z.number().int().min(1).max(1000).optional(),
   })
   .refine((value) => Object.keys(value).length > 0, { message: "No fields provided" });
 export type UpdateItemInput = z.infer<typeof updateItemSchema>;

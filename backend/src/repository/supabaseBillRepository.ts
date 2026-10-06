@@ -1,13 +1,18 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Bill } from "../schemas/bills";
-import { BillRepository } from "./billRepository";
+import { BillRepository, JoinCodeConflictError } from "./billRepository";
 
 export class SupabaseBillRepository implements BillRepository {
   constructor(private client: SupabaseClient) {}
 
-  async create(bill: Bill, joinCode: string): Promise<void> {
-    const { error } = await this.client.from("bills").insert(this.toRow(bill, joinCode));
-    if (error) throw error;
+  async create(bill: Bill): Promise<void> {
+    const { error } = await this.client.from("bills").insert(this.toRow(bill));
+    if (error) {
+      if (error.code === "23505" && /join_code/i.test(`${error.message} ${error.details ?? ""}`)) {
+        throw new JoinCodeConflictError();
+      }
+      throw error;
+    }
   }
 
   async getById(billId: string): Promise<Bill | undefined> {
@@ -20,14 +25,14 @@ export class SupabaseBillRepository implements BillRepository {
     return data ? this.fromRow(data as Bill) : undefined;
   }
 
-  async getIdByJoinCode(joinCode: string): Promise<string | undefined> {
+  async getByJoinCode(joinCode: string): Promise<Bill | undefined> {
     const { data, error } = await this.client
       .from("bills")
-      .select("id")
+      .select("*")
       .eq("join_code", joinCode.toUpperCase())
       .maybeSingle();
     if (error) throw error;
-    return data?.id;
+    return data ? this.fromRow(data as Bill) : undefined;
   }
 
   async listByOwner(ownerId: string, paid: boolean): Promise<Bill[]> {
@@ -46,16 +51,16 @@ export class SupabaseBillRepository implements BillRepository {
   async save(bill: Bill): Promise<void> {
     const { error } = await this.client
       .from("bills")
-      .update(this.toRow(bill, bill.joinCode))
+      .update(this.toRow(bill))
       .eq("id", bill.id);
     if (error) throw error;
   }
 
-  private toRow(bill: Bill, joinCode: string) {
+  private toRow(bill: Bill) {
     return {
       id: bill.id,
       owner_id: bill.ownerId,
-      join_code: joinCode,
+      join_code: bill.joinCode,
       created_at: bill.createdAt,
       title: bill.title,
       people: bill.people,
@@ -79,7 +84,7 @@ export class SupabaseBillRepository implements BillRepository {
       createdAt: row.createdAt,
       title: row.title,
       people: row.people,
-      items: row.items,
+      items: row.items.map((item) => ({ ...item, quantity: item.quantity ?? 1 })),
       gstMode: row.gstMode,
       gstRate: row.gstRate,
       tipAmount: row.tipAmount,

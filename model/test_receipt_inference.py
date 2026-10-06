@@ -40,6 +40,7 @@ class ReceiptInferenceParsingTests(unittest.TestCase):
 
     def test_prompt_uses_valid_json_example(self) -> None:
         self.assertIn('{"items":[{"name":"item name","price":12.34,"quantity":1}]', SYSTEM_PROMPT)
+        self.assertIn("price is the amount for one unit", SYSTEM_PROMPT)
         self.assertNotIn('"price": number', SYSTEM_PROMPT)
 
     def test_retries_once_after_invalid_model_json(self) -> None:

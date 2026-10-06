@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import { Bill, BillItem } from "../schemas/bills";
 import { calculateSplit } from "../domain/splitCalculator";
-import { BillRepository } from "../repository/billRepository";
+import { BillRepository, JoinCodeConflictError } from "../repository/billRepository";
 import { generateJoinCode } from "../utils/joinCode";
 import { forbidden, notFound } from "../utils/httpError";
 import { ExtractedReceipt } from "../schemas/receipt";
@@ -20,33 +20,32 @@ export class BillService {
   }
 
   async createBill(ownerId: string, title: string | undefined, ownerName: string): Promise<Bill> {
-    let joinCode = "";
+    const id = randomUUID();
+    const createdAt = Date.now();
     for (let attempt = 0; attempt < MAX_JOIN_CODE_ATTEMPTS; attempt++) {
-      const candidate = generateJoinCode();
-      if (!(await this.repo.getIdByJoinCode(candidate))) {
-        joinCode = candidate;
-        break;
+      const bill: Bill = {
+        id,
+        ownerId,
+        joinCode: generateJoinCode(),
+        createdAt,
+        title: title?.trim() || "New split",
+        people: [{ id: ownerId, name: ownerName }],
+        items: [],
+        gstMode: "inclusive",
+        gstRate: AU_GST_RATE,
+        tipAmount: 0,
+        serviceFeeAmount: 0,
+        settledPersonIds: [],
+        version: 1,
+      };
+      try {
+        await this.repo.create(bill);
+        return bill;
+      } catch (error) {
+        if (!(error instanceof JoinCodeConflictError)) throw error;
       }
     }
-    if (!joinCode) throw new Error("Could not generate a unique join code");
-
-    const bill: Bill = {
-      id: randomUUID(),
-      ownerId,
-      joinCode,
-      createdAt: Date.now(),
-      title: title?.trim() || "New split",
-      people: [{ id: ownerId, name: ownerName }],
-      items: [],
-      gstMode: "inclusive",
-      gstRate: AU_GST_RATE,
-      tipAmount: 0,
-      serviceFeeAmount: 0,
-      settledPersonIds: [],
-      version: 1,
-    };
-    await this.repo.create(bill, joinCode);
-    return bill;
+    throw new Error(`Could not generate a unique join code after ${MAX_JOIN_CODE_ATTEMPTS} attempts`);
   }
 
   async getBill(billId: string, ownerId: string): Promise<Bill> {
@@ -54,9 +53,14 @@ export class BillService {
   }
 
   async getBillByJoinCode(joinCode: string): Promise<Bill> {
-    const billId = await this.repo.getIdByJoinCode(joinCode);
-    if (!billId) throw notFound("Bill");
-    return this.requireBill(billId);
+    const bill = await this.repo.getByJoinCode(joinCode);
+    if (!bill) throw notFound("Bill");
+    return bill;
+  }
+
+  async getBillAndSplitByJoinCode(joinCode: string) {
+    const bill = await this.getBillByJoinCode(joinCode);
+    return { bill, split: calculateSplit(bill) };
   }
 
   async getSplitByJoinCode(joinCode: string) {
@@ -135,13 +139,14 @@ export class BillService {
     item: { name: string; price: number; quantity?: number }
   ): Promise<Bill> {
     const bill = await this.requireBill(billId, ownerId);
-    const newItem: BillItem = {
+    const newItems: BillItem[] = Array.from({ length: item.quantity ?? 1 }, () => ({
       id: randomUUID(),
       name: item.name.trim(),
       price: item.price,
+      quantity: 1,
       assignedTo: [],
-    };
-    const updated: Bill = { ...bill, items: [...bill.items, newItem] };
+    }));
+    const updated: Bill = { ...bill, items: [...bill.items, ...newItems] };
     await this.repo.save(updated);
     return updated;
   }
@@ -152,13 +157,15 @@ export class BillService {
     extraction: ExtractedReceipt
   ): Promise<Bill> {
     const bill = await this.requireBill(billId, ownerId);
-    const importedItems: BillItem[] = extraction.items.map((item) => ({
-      id: randomUUID(),
-      name: item.name.trim(),
-      price: item.price,
-      quantity: item.quantity,
-      assignedTo: [],
-    }));
+    const importedItems: BillItem[] = extraction.items.flatMap((item) =>
+      Array.from({ length: item.quantity }, () => ({
+        id: randomUUID(),
+        name: item.name.trim(),
+        price: item.price,
+        quantity: 1,
+        assignedTo: [],
+      }))
+    );
     const updated: Bill = {
       ...bill,
       items: [...bill.items, ...importedItems],
@@ -172,7 +179,7 @@ export class BillService {
     billId: string,
     ownerId: string,
     itemId: string,
-    patch: Partial<Pick<BillItem, "name" | "price">>
+    patch: Partial<Pick<BillItem, "name" | "price" | "quantity">>
   ): Promise<Bill> {
     const bill = await this.requireBill(billId, ownerId);
     if (!bill.items.some((i) => i.id === itemId)) throw notFound("Item");
