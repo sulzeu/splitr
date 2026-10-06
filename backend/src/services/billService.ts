@@ -45,7 +45,9 @@ export class BillService {
         if (!(error instanceof JoinCodeConflictError)) throw error;
       }
     }
-    throw new Error(`Could not generate a unique join code after ${MAX_JOIN_CODE_ATTEMPTS} attempts`);
+    throw new Error(
+      `Could not generate a unique join code after ${MAX_JOIN_CODE_ATTEMPTS} attempts`
+    );
   }
 
   async getBill(billId: string, ownerId: string): Promise<Bill> {

@@ -91,8 +91,9 @@ describe("receipt upload body size", () => {
     expect(response.body.bill.items.map((item: { price: number }) => item.price)).toEqual([
       3.33, 3.33, 3.33,
     ]);
-    expect(response.body.bill.items.reduce((sum: number, item: { price: number }) => sum + item.price, 0))
-      .toBe(9.99);
+    expect(
+      response.body.bill.items.reduce((sum: number, item: { price: number }) => sum + item.price, 0)
+    ).toBe(9.99);
   });
 
   it("rejects a pair of images over the combined limit", async () => {

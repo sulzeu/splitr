@@ -119,7 +119,6 @@ export function HomeScreen({ onEnterBill }: { onEnterBill: () => void }) {
           </button>
         </>
       )}
-
     </div>
   );
 }

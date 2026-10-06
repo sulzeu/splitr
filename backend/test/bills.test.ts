@@ -122,12 +122,8 @@ describe("bills API", () => {
 
     expect(added.status).toBe(201);
     expect(added.body.items).toHaveLength(3);
-    expect(added.body.items.map((item: { quantity: number }) => item.quantity)).toEqual([
-      1, 1, 1,
-    ]);
-    expect(added.body.items.map((item: { price: number }) => item.price)).toEqual([
-      2.5, 2.5, 2.5,
-    ]);
+    expect(added.body.items.map((item: { quantity: number }) => item.quantity)).toEqual([1, 1, 1]);
+    expect(added.body.items.map((item: { price: number }) => item.price)).toEqual([2.5, 2.5, 2.5]);
     expect(new Set(added.body.items.map((item: { id: string }) => item.id)).size).toBe(3);
   });
 

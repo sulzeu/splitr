@@ -49,10 +49,7 @@ export class SupabaseBillRepository implements BillRepository {
   }
 
   async save(bill: Bill): Promise<void> {
-    const { error } = await this.client
-      .from("bills")
-      .update(this.toRow(bill))
-      .eq("id", bill.id);
+    const { error } = await this.client.from("bills").update(this.toRow(bill)).eq("id", bill.id);
     if (error) throw error;
   }
 
