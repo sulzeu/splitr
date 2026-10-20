@@ -1,6 +1,24 @@
 import { SupabaseClient } from "@supabase/supabase-js";
-import { Bill } from "../schemas/bills";
-import { BillRepository, JoinCodeConflictError } from "./billRepository";
+import { Bill, billSchema } from "../schemas/bills";
+import { BillNotFoundError, BillRepository, JoinCodeConflictError } from "./billRepository";
+
+type BillRow = {
+  id: string;
+  owner_id: string;
+  join_code: string;
+  created_at: number;
+  title: string;
+  people: unknown;
+  items: unknown;
+  gst_mode: Bill["gstMode"];
+  gst_rate: number;
+  tip_amount: number;
+  service_fee_amount: number;
+  receipt_total: number | null;
+  settled_person_ids: unknown;
+  paid_at: number | null;
+  version: number;
+};
 
 export class SupabaseBillRepository implements BillRepository {
   constructor(private client: SupabaseClient) {}
@@ -22,7 +40,7 @@ export class SupabaseBillRepository implements BillRepository {
       .eq("id", billId)
       .maybeSingle();
     if (error) throw error;
-    return data ? this.fromRow(data as Bill) : undefined;
+    return data ? this.fromRow(data as BillRow) : undefined;
   }
 
   async getByJoinCode(joinCode: string): Promise<Bill | undefined> {
@@ -32,7 +50,7 @@ export class SupabaseBillRepository implements BillRepository {
       .eq("join_code", joinCode.toUpperCase())
       .maybeSingle();
     if (error) throw error;
-    return data ? this.fromRow(data as Bill) : undefined;
+    return data ? this.fromRow(data as BillRow) : undefined;
   }
 
   async listByOwner(ownerId: string, paid: boolean): Promise<Bill[]> {
@@ -45,12 +63,23 @@ export class SupabaseBillRepository implements BillRepository {
       ? await query.not("paid_at", "is", null)
       : await query.is("paid_at", null);
     if (error) throw error;
-    return (data ?? []).map((row) => this.fromRow(row as Bill));
+    return (data ?? []).map((row) => this.fromRow(row as BillRow));
   }
 
   async save(bill: Bill): Promise<void> {
-    const { error } = await this.client.from("bills").update(this.toRow(bill)).eq("id", bill.id);
-    if (error) throw error;
+    const { data, error } = await this.client
+      .from("bills")
+      .update(this.toRow(bill))
+      .eq("id", bill.id)
+      .select("id")
+      .maybeSingle();
+    if (error) {
+      if (error.code === "23505" && /join_code/i.test(`${error.message} ${error.details ?? ""}`)) {
+        throw new JoinCodeConflictError();
+      }
+      throw error;
+    }
+    if (!data) throw new BillNotFoundError(bill.id);
   }
 
   private toRow(bill: Bill) {
@@ -73,23 +102,23 @@ export class SupabaseBillRepository implements BillRepository {
     };
   }
 
-  private fromRow(row: Bill): Bill {
-    return {
+  private fromRow(row: BillRow): Bill {
+    return billSchema.parse({
       id: row.id,
-      ownerId: row.ownerId,
-      joinCode: row.joinCode,
-      createdAt: row.createdAt,
+      ownerId: row.owner_id,
+      joinCode: row.join_code,
+      createdAt: row.created_at,
       title: row.title,
       people: row.people,
-      items: row.items.map((item) => ({ ...item, quantity: item.quantity ?? 1 })),
-      gstMode: row.gstMode,
-      gstRate: row.gstRate,
-      tipAmount: row.tipAmount,
-      serviceFeeAmount: row.serviceFeeAmount,
-      receiptTotal: row.receiptTotal ?? undefined,
-      settledPersonIds: row.settledPersonIds,
-      paidAt: row.paidAt ?? undefined,
-      version: row.version ?? 1,
-    };
+      items: row.items,
+      gstMode: row.gst_mode,
+      gstRate: row.gst_rate,
+      tipAmount: row.tip_amount,
+      serviceFeeAmount: row.service_fee_amount,
+      receiptTotal: row.receipt_total ?? undefined,
+      settledPersonIds: row.settled_person_ids,
+      paidAt: row.paid_at ?? undefined,
+      version: row.version,
+    });
   }
 }

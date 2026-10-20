@@ -4,6 +4,13 @@ export interface AccountRecord extends Account {
   passwordHash: string;
 }
 
+export class AccountConflictError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "AccountConflictError";
+  }
+}
+
 export interface AccountRepository {
   create(account: AccountRecord): Promise<void>;
   getById(accountId: string): Promise<AccountRecord | undefined>;

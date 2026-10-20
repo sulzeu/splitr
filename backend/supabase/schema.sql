@@ -26,8 +26,12 @@ create table if not exists public.bills (
   service_fee_amount numeric not null default 0,
   receipt_total numeric,
   settled_person_ids jsonb not null default '[]'::jsonb,
-  paid_at bigint
+  paid_at bigint,
+  version integer not null default 1 check (version >= 1)
 );
+
+alter table public.bills
+  add column if not exists version integer not null default 1 check (version >= 1);
 
 create index if not exists bills_owner_id_created_at_idx on public.bills(owner_id, created_at desc);
 create index if not exists sessions_account_id_idx on public.sessions(account_id);

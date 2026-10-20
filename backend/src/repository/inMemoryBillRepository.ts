@@ -1,5 +1,5 @@
 import { Bill } from "../schemas/bills";
-import { BillRepository, JoinCodeConflictError } from "./billRepository";
+import { BillNotFoundError, BillRepository, JoinCodeConflictError } from "./billRepository";
 
 export class InMemoryBillRepository implements BillRepository {
   private billsById = new Map<string, Bill>();
@@ -24,10 +24,23 @@ export class InMemoryBillRepository implements BillRepository {
   async listByOwner(ownerId: string, paid: boolean): Promise<Bill[]> {
     return [...this.billsById.values()].filter(
       (bill) => bill.ownerId === ownerId && Boolean(bill.paidAt) === paid
-    );
+    ).sort((a, b) => b.createdAt - a.createdAt);
   }
 
   async save(bill: Bill): Promise<void> {
+    const existing = this.billsById.get(bill.id);
+    if (!existing) throw new BillNotFoundError(bill.id);
+
+    const joinCode = bill.joinCode.toUpperCase();
+    const existingBillId = this.billIdByJoinCode.get(joinCode);
+    if (existingBillId && existingBillId !== bill.id) throw new JoinCodeConflictError();
+
+    const previousJoinCode = existing.joinCode.toUpperCase();
+    if (previousJoinCode !== joinCode) {
+      this.billIdByJoinCode.delete(previousJoinCode);
+      this.billIdByJoinCode.set(joinCode, bill.id);
+    }
+
     this.billsById.set(bill.id, bill);
   }
 }

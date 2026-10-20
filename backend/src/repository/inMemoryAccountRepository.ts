@@ -1,4 +1,4 @@
-import { AccountRecord, AccountRepository } from "./accountRepository";
+import { AccountConflictError, AccountRecord, AccountRepository } from "./accountRepository";
 
 export class InMemoryAccountRepository implements AccountRepository {
   private accountsById = new Map<string, AccountRecord>();
@@ -6,8 +6,16 @@ export class InMemoryAccountRepository implements AccountRepository {
   private accountIdBySession = new Map<string, { accountId: string; expiresAt: number }>();
 
   async create(account: AccountRecord): Promise<void> {
+    const normalizedEmail = account.email.toLowerCase();
+    if (this.accountsById.has(account.id)) {
+      throw new AccountConflictError("Account ID already exists");
+    }
+    if (this.accountIdByEmail.has(normalizedEmail)) {
+      throw new AccountConflictError("Account email already exists");
+    }
+
     this.accountsById.set(account.id, account);
-    this.accountIdByEmail.set(account.email, account.id);
+    this.accountIdByEmail.set(normalizedEmail, account.id);
   }
 
   async getById(accountId: string): Promise<AccountRecord | undefined> {
