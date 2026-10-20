@@ -122,7 +122,7 @@ describe("bill editing flow", () => {
     vi.mocked(api.addPerson).mockImplementation(async (_billId, name) => {
       bill = {
         ...bill,
-        people: [...bill.people, { type: "GUEST", id: `person-${nextPersonId++}`, name }],
+        people: [...bill.people, { id: `person-${nextPersonId++}`, name }],
       };
       return clone(bill);
     });

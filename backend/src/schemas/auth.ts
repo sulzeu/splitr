@@ -1,18 +1,8 @@
 import { z } from "zod";
+import { accountSchema, personSchema } from "../shared/contracts";
 
-export const personSchema = z.object({
-  id: z.string(),
-  name: z.string().trim().min(1).max(100),
-});
-export type Person = z.infer<typeof personSchema>;
-
-export const accountSchema = z.object({
-  id: z.string(),
-  email: z.string().email(),
-  displayName: z.string().trim().min(1).max(100),
-  createdAt: z.number(),
-});
-export type Account = z.infer<typeof accountSchema>;
+export { accountSchema, personSchema };
+export type { Account, Person } from "../shared/contracts";
 
 export const authMethodSchema = z.enum(["password", "oauth"]);
 export type AuthMethod = z.infer<typeof authMethodSchema>;
